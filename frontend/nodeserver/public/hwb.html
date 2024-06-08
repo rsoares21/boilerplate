@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html>
+<script src='waxjs.js'></script>
+
+<head>
+    <style>
+        body {
+            background-color: black;
+            color: limegreen;
+            font-size: 12px;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        .content {
+            padding-top: 30px;
+            max-width: 400px;
+            margin: auto;
+        }
+        
+        button,
+        button::after {
+            width: 60px;
+            height: 18px;
+            background: linear-gradient(45deg, transparent 5%, limegreen 5%);
+            border: 0;
+            color: #fff;
+            letter-spacing: 3px;
+            box-shadow: 6px 0px 0px #00E6F6;
+            outline: transparent;
+            position: relative;
+        }
+        
+        button::after {
+            --slice-0: inset(50% 50% 50% 50%);
+            --slice-1: inset(80% -6px 0 0);
+            --slice-2: inset(50% -6px 30% 0);
+            --slice-3: inset(10% -6px 85% 0);
+            --slice-4: inset(40% -6px 43% 0);
+            --slice-5: inset(80% -6px 5% 0);
+            content: 'AVAILABLE NOW';
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 3%, #00E6F6 3%, #00E6F6 5%, limegreen 5%);
+            clip-path: var(--slice-0);
+        }
+        
+        button:hover::after {
+            animation: 1s glitch;
+            animation-timing-function: steps(2, end);
+        }
+        
+        @keyframes glitch {
+            0% {
+                clip-path: var(--slice-1);
+                transform: translate(-20px, -10px);
+            }
+            10% {
+                clip-path: var(--slice-3);
+                transform: translate(10px, 10px);
+            }
+            20% {
+                clip-path: var(--slice-1);
+                transform: translate(-10px, 10px);
+            }
+            30% {
+                clip-path: var(--slice-3);
+                transform: translate(0px, 5px);
+            }
+            40% {
+                clip-path: var(--slice-2);
+                transform: translate(-5px, 0px);
+            }
+            50% {
+                clip-path: var(--slice-3);
+                transform: translate(5px, 0px);
+            }
+            60% {
+                clip-path: var(--slice-4);
+                transform: translate(5px, 10px);
+            }
+            70% {
+                clip-path: var(--slice-2);
+                transform: translate(-10px, 10px);
+            }
+            80% {
+                clip-path: var(--slice-5);
+                transform: translate(20px, -10px);
+            }
+            90% {
+                clip-path: var(--slice-1);
+                transform: translate(-10px, 0px);
+            }
+            100% {
+                clip-path: var(--slice-1);
+                transform: translate(0);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!--<strong>Auto-login Feature</strong>-->
+    <div class="area">
+    </div>
+
+    <div class="context">
+
+        <br>
+        <h1 onclick="javascipt:window.location.reload();">reload page</h1><br>
+        <center>
+            <button id="sign" onclick=startBot()>start</button>&nbsp;&nbsp;&nbsp;
+            <button id="stop" onclick=stopBot()>stop</button>
+        </center>
+        <br>
+
+        <div class="content">
+            <pre><code id="status" style="font-size: 12px;">Script is runnnig...<br></code></pre>
+            <p style="color:#00ccff" id="autologin"></p><br><br>
+            <pre><code id="response" style="font-size: 12px;"></code></pre>
+
+            <p style="color:#00ccff" id="loginresponse"></p><br>
+
+            <!--<p>Use this if you're not automatically logged in. Note that if you are auto-logged in, clicking this does not open a popup and the userAccount is still returned.</p>-->
+            <!--<button id="login" onclick=login()>WAX Login</button>-->
+
+            <div id="actiondata"></div>
+
+        </div>
+    </div>
+
+    <script>
+        //Globals
+
+        let userAccount = undefined
+        let botRunning = false
+        let stopClicked = false
+        let myMasters = []
+        let mySoftware = []
+        let myProcesses = []
+        let myInfectedVirus = []
+        let myInstalledVirus = []
+        let myInstalledRansomwares = []
+        let viruses = []
+        let timeouts = []
+        let ransomwares = []
+        let rpclist = [
+            'wax.pink.gg', 'api-wax-mainnet.wecan.dev', 'api.wax.alohaeos.com'
+        ]
+
+        let rpclistReference = [
+            'wax.pink.gg', 'wax.eu.eosamsterdam.net', 'api-wax-mainnet-prospectors.wecan.dev', 'api-wax-mainnet.wecan.dev', 'wax.cryptolions.io', 'wax.greymass.com',
+            'api.wax.alohaeos.com', 'api.waxsweden.org'
+        ]
+
+
+        let rpc = rpclist[Math.floor(Math.random() * rpclist.length)];
+
+        let isRemovingVirus = false
+        let qtdRemovingVirus = 0
+        let stillCracking = false
+        let isUncracking = false
+        let isCracking = false
+        let revealRemovingVirus = false
+        let revealCracking = false
+        let hasInfectedVirus = false
+        let totalVirusStaked = 0
+        let timeNow = Number(new Date().getTime() / 1000).toFixed(0)
+        let toCollect = []
+        let toClaim = []
+        let toReveal = []
+        let toUncrack = []
+        let antivirusId = undefined
+        let antivirusId2 = undefined
+        let antivirusIdisInUse = false
+        let antivirusId2isInUse = false
+        let dtStart = new Date()
+
+        let firewallId = undefined
+        let crackerId = undefined
+        let infectedVirusId = undefined
+        let infectedVirusId2 = undefined
+        let npclist = []
+        let usersTable = []
+        let myslaves = []
+        let myUserId = undefined //323310218143197
+        let initLoopTime = new Date()
+
+        // Parameters
+        let crackingEnabled = false
+
+        const wax = new waxjs.WaxJS({
+            rpcEndpoint: 'https://' + rpc
+        });
+
+        //automatically check for credentials
+        autoLogin();
+
+        let isLoggedIn = false
+
+        //checks if autologin is available 
+        async function autoLogin() {
+            let isAutoLoginAvailable = await wax.isAutoLoginAvailable();
+            if (isAutoLoginAvailable) {
+                userAccount = wax.userAccount;
+                let pubKeys = wax.pubKeys;
+                let str
+
+                str = '<br>Hello ' + userAccount + '<br/>' //Active: ' + pubKeys[0] + '<br/>Owner: ' + pubKeys[1]
+
+                if (userAccount != 'vvdr.wam') {
+                    str = '<br>UNAUTHORIZED HACKER...<br/>' //Active: ' + pubKeys[0] + '<br/>Owner: ' + pubKeys[1]
+                    document.getElementById('autologin').insertAdjacentHTML('beforeend', str);
+                    await new Promise(r => setTimeout(r, 8000))
+                    window.location.reload();
+                } else {
+                    isLoggedIn = true
+                    document.getElementById('autologin').insertAdjacentHTML('beforeend', str);
+                }
+
+            } else {
+                isLoggedIn = false
+                document.getElementById('autologin').insertAdjacentHTML('beforeend', '<button id="login" onclick=login()>WAX Login</button>');
+            }
+        }
+
+        //normal login. Triggers a popup for non-whitelisted dapps
+        async function login() {
+            try {
+                //if autologged in, this simply returns the userAccount w/no popup
+                let userAccount = await wax.login();
+                let pubKeys = wax.pubKeys;
+                let str = 'Hello ' + userAccount + '<br/>' //Active: ' + pubKeys[0] + '<br/>Owner: ' + pubKeys[1]
+                isLoggedIn = true
+                document.getElementById('loginresponse').insertAdjacentHTML('beforeend', str);
+                document.getElementById('autologin').innerHTML = '';
+            } catch (e) {
+                document.getElementById('loginresponse').append(e.message);
+            }
+        }
+
+        async function stopBot() {
+            console.log('stopBot()')
+            stopClicked = true
+            botRunning = false
+        }
+
+        async function startBot() {
+            stopClicked = false
+            console.log('startBot()')
+
+            if (isLoggedIn && !botRunning) {
+                botRunning = true
+
+                while (botRunning) {
+
+                    initLoopTime = new Date()
+
+                    rpc = rpclist[Math.floor(Math.random() * rpclist.length)];
+                    console.log(`%c--> rpc: ${rpc}`, 'color:pink')
+
+                    antivirusId = undefined
+                    antivirusId2 = undefined
+                    firewallId = undefined
+                    infectedVirusId = undefined
+                    infectedVirusId2 = undefined
+                    totalVirusStaked = 0
+
+                    //console.log('=--------> init loadNPCs')
+                    //await loadNPCs()  // CONTINUAR NAO CARREGOU
+                    //await new Promise(r => setTimeout(r, 1000));
+
+                    console.log('--> init loadVirusTable ')
+                    await loadVirusTable(1000)
+                        //await new Promise(r => setTimeout(r, 500))
+
+                    console.log('--> init loadRansomware ')
+                    await loadRansomware(1000)
+                        //await new Promise(r => setTimeout(r, 500))
+
+                    console.log('--> init loadTimeouts ')
+                    await loadTimeouts(1000)
+                        //await new Promise(r => setTimeout(r, 500))
+
+                    console.log('--> init checkMySoftware')
+                    await checkMySoftware()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done checkMySoftware')
+
+                    console.log('--> init checkMyProcesses')
+                    await checkMyProcesses()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done checkMyProcesses')
+
+                    console.log('--> init revealProcess')
+                    await revealProcess()
+
+                    console.log('--> init claimProcess')
+                    await claimProcess()
+
+                    console.log('--> init checkPVPProcesses')
+                    await checkPVPProcesses()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done checkPVPProcesses')
+
+                    console.log('--> init checkForMasters')
+                    await checkForMasters()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done checkForMasters')
+
+                    console.log('--> init uncrackMaster')
+                    await uncrackMaster()
+
+                    console.log('--> init checkForInfectedVirus')
+                    await checkForInfectedVirus()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done checkForInfectedVirus')
+
+                    console.log('--> init checkForMyInstalledVirus')
+                    await checkForMyInstalledVirus()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done checkForMyInstalledVirus')
+
+                    console.log('--> init checkForMyInstalledRansomware')
+                    await checkForMyInstalledRansomware()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done checkForMyInstalledRansomware')
+
+                    //console.log('--> init startActions')
+                    await startActions()
+                        //await new Promise(r => setTimeout(r, 500));
+                        //console.log('done startActions')
+
+                    await new Promise(r => setTimeout(r, 15000));
+
+                }
+                if (botRunning) alert('    Bot is paused.')
+
+            } else {
+                if (botRunning) alert('    Bot is running...')
+                else if (!isLoggedIn) alert('Please login first.')
+
+            }
+
+        }
+
+        async function startActions() {
+
+            return new Promise(async resolve => {
+
+                //console.log('--> init collect')
+                await collect()
+
+                //await new Promise(r => setTimeout(r, 500));
+
+                console.log('--> init useAntiVirus')
+                await useAntiVirus()
+
+                console.log('--> init activateIdleVirus')
+                await activateIdleVirus()
+
+                console.log('--> init autoCrack')
+                await autoCrack()
+
+                console.log(`%cruntime: ` + (Number(Math.abs((initLoopTime.getTime() - new Date().getTime()) / 1000)).toFixed(0)) + 's', 'color:lime')
+                console.log(`%cbalance: ${getUserBalance(userAccount)}`, 'color:lime')
+                console.log(`%cRunning since ${dtStart}`, 'color:lime')
+
+                if (!botRunning) console.log('%cbot paused.', 'color:yellow')
+
+                resolve()
+
+            })
+
+        }
+
+        async function checkPVPProcesses() {
+
+            return new Promise(async resolve => {
+
+                resolve()
+            })
+
+        }
+
+        async function loadTimeouts(limit) {
+
+            return new Promise(async resolve => {
+
+                let lowerbound = 'null'
+                let next = true
+
+                while (next) {
+                    //console.log('lowerbound:' + lowerbound)
+
+                    var myHeaders = new Headers();
+                    myHeaders.append("accept", "*/*");
+                    myHeaders.append("accept-language", "en-US,en;q=0.9");
+                    myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36");
+
+                    var raw = "{\r\n    \"json\": true,\r\n    \"code\": \"hackersworld\",\r\n    \"scope\": \"hackersworld\",\r\n    \"table\": \"timeouts\",\r\n    \"lower_bound\": " + lowerbound + ",\r\n    \"upper_bound\": null,\r\n    \"index_position\": 1,\r\n    \"key_type\": \"\",\r\n    \"limit\": \"1000\",\r\n    \"reverse\": false,\r\n    \"show_payer\": true\r\n}";
+
+                    var requestOptions = {
+                        method: 'POST',
+                        headers: myHeaders,
+                        body: raw,
+                        redirect: 'follow'
+                    };
+
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(async result => {
+                            //console.log(result))
+
+                            let objresponse = JSON.parse(result)
+
+                            let retrievedTable = objresponse.rows
+                                //console.log('more:' + objresponse.more)
+
+                            lowerbound = objresponse.next_key
+
+                            //console.log('retrievedTable.length:' + retrievedTable.length)
+
+                            let alreadyinlist = false
+
+                            retrievedTable.forEach(async rttimeout => {
+                                //console.log('rttimeout:' + JSON.stringify(rttimeout))
+                                alreadyinlist = false
+                                timeouts.forEach(async timeout => {
+                                    if (rttimeout.data.id == timeout.data.id) {
+                                        alreadyinlist = true
+                                            //console.log('exists')
+                                    }
+                                });
+                                if (!alreadyinlist) timeouts.push(rttimeout)
+
+                            });
+
+                            if (objresponse.more) {
+                                //console.log('retrievedTable:' + retrievedTable.length)
+                                next = true
+
+                            } else {
+                                //console.log('last page.')
+                                next = false
+
+                            }
+
+                        })
+                        .catch(error => console.log('error', error));
+
+                    await new Promise(r => setTimeout(r, 1000));
+
+                }
+
+                console.log('%c    timeouts: ' + timeouts.length, 'color:yellow')
+
+                resolve()
+            })
+
+        }
+
+        async function loadRansomware(limit) {
+
+            return new Promise(async resolve => {
+
+                let lowerbound = 'null'
+                let next = true
+
+                while (next) {
+                    //console.log('lowerbound:' + lowerbound)
+
+                    var myHeaders = new Headers();
+                    myHeaders.append("accept", "*/*");
+                    myHeaders.append("accept-language", "en-US,en;q=0.9");
+                    myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36");
+
+                    var raw = "{\r\n    \"json\": true,\r\n    \"code\": \"hackersworld\",\r\n    \"scope\": \"hackersworld\",\r\n    \"table\": \"ransomws\",\r\n    \"lower_bound\": null,\r\n    \"upper_bound\": null,\r\n    \"index_position\": 1,\r\n    \"key_type\": \"\",\r\n    \"limit\": \"1000\",\r\n    \"reverse\": false,\r\n    \"show_payer\": true\r\n}";
+
+                    var requestOptions = {
+                        method: 'POST',
+                        headers: myHeaders,
+                        body: raw,
+                        redirect: 'follow'
+                    };
+
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(async result => {
+                            //console.log(result))
+
+                            let objresponse = JSON.parse(result)
+
+                            let retrievedTable = objresponse.rows
+                                //console.log('more:' + objresponse.more)
+
+                            lowerbound = objresponse.next_key
+
+                            //console.log('retrievedTable.length:' + retrievedTable.length)
+
+                            let alreadyinlist = false
+
+                            retrievedTable.forEach(async rtransom => {
+                                //console.log('rtransom:' + JSON.stringify(rtransom))
+                                alreadyinlist = false
+                                ransomwares.forEach(async ransom => {
+                                    if (rtransom.data.id == ransom.data.id) {
+                                        alreadyinlist = true
+                                            //console.log('exists')
+                                    }
+                                });
+                                if (!alreadyinlist) ransomwares.push(rtransom)
+
+                            });
+
+
+                            if (objresponse.more) {
+                                //console.log('retrievedTable:' + retrievedTable.length)
+                                next = true
+
+                            } else {
+                                //console.log('last page.')
+                                next = false
+
+                            }
+
+                        })
+                        .catch(error => console.log('error', error));
+
+                    await new Promise(r => setTimeout(r, 1000));
+
+                }
+
+                console.log('%c    ransomwares: ' + ransomwares.length, 'color:yellow')
+
+                resolve()
+            })
+
+        }
+
+        async function loadVirusTable(limit) {
+
+            let dtinit = new Date()
+
+            return new Promise(async resolve => {
+
+                let lowerbound = 'null'
+                let next = true
+
+                while (next) {
+                    //console.log('lowerbound:' + lowerbound)
+
+                    var myHeaders = new Headers();
+                    myHeaders.append("accept", "*/*");
+                    myHeaders.append("accept-language", "en-US,en;q=0.9");
+                    myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36");
+
+                    var raw = "{\r\n    \"json\": true,\r\n    \"code\": \"hackersworld\",\r\n    \"scope\": \"hackersworld\",\r\n    \"table\": \"viruses\",\r\n    \"lower_bound\": " + lowerbound + ",\r\n    \"upper_bound\": null,\r\n    \"index_position\": 1,\r\n    \"key_type\": \"\",\r\n    \"limit\": \"1000\",\r\n    \"reverse\": false,\r\n    \"show_payer\": true\r\n}";
+
+                    var requestOptions = {
+                        method: 'POST',
+                        headers: myHeaders,
+                        body: raw,
+                        redirect: 'follow'
+                    };
+
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(async result => {
+                            //console.log(result))
+
+
+                            let objresponse = JSON.parse(result)
+
+                            let retrievedTable = objresponse.rows
+                                //console.log('more:' + objresponse.more)
+
+                            lowerbound = objresponse.next_key
+
+                            //console.log('retrievedTable.length:' + retrievedTable.length)
+
+                            let alreadyinlist = false
+
+                            retrievedTable.forEach(async rtvirus => {
+                                //console.log('rtvirus:' + JSON.stringify(rtvirus))
+                                alreadyinlist = false
+                                viruses.forEach(async virus => {
+                                    if (rtvirus.data.id == virus.data.id) {
+                                        alreadyinlist = true
+                                            //console.log('exists')
+                                    }
+                                });
+                                if (!alreadyinlist) viruses.push(rtvirus)
+
+                            });
+
+
+                            if (objresponse.more) {
+                                //console.log('retrievedTable:' + retrievedTable.length)
+                                next = true
+
+                            } else {
+                                //console.log('last page.')
+                                next = false
+
+                            }
+
+
+                        })
+                        .catch(error => console.log(`%c    rpc error. retrying...`));
+
+                    await new Promise(r => setTimeout(r, 500));
+
+
+
+                }
+
+                console.log(`%c    viruses: ${viruses.length} (${Number(Math.abs(dtinit.getTime() - new Date().getTime())/1000).toFixed(2)}s)`, 'color:yellow')
+
+                resolve()
+            })
+
+        }
+
+        async function autoCrack() {
+
+            return new Promise(async resolve => {
+
+                if (!isCracking) {
+
+                    var myHeaders = new Headers();
+                    myHeaders.append("accept", "application/json");
+                    myHeaders.append("accept-language", "en-US,en;q=0.5");
+                    myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                    myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36");
+
+                    var raw = "{\r\n    \"code\": \"hackersworld\",\r\n    \"table\": \"slaves\",\r\n    \"scope\": \"hackersworld\",\r\n    \"json\": true,\r\n    \"index_position\": \"2\",\r\n    \"key_type\": \"i64\",\r\n    \"encode_type\": \"\",\r\n    \"lower_bound\": \"" + myUserId + "\",\r\n    \"upper_bound\": \"" + myUserId + "\",\r\n    \"limit\": 200,\r\n    \"reverse\": false,\r\n    \"show_payer\": false\r\n}";
+
+                    var requestOptions = {
+                        method: 'POST',
+                        headers: myHeaders,
+                        body: raw,
+                        redirect: 'follow'
+                    };
+
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(async result => {
+                            objRetorno = JSON.parse(result)
+                            myslaves = objRetorno.rows
+
+                            ////53	1yn...c.wam	31122396785	239.6.7.85	Sahaliar -
+                            ////235	chromodoriss	3333117167101235	117.167.101.235	hacker1 -
+                            ////262	d5hba.wam	3333179233143197	179.233.143.197	Paxson
+                            ////264	dckho.wam	3333127129179245	127.129.179.245	PcAcc1
+                            ////274	do5r2.wam	2322152013985	15.201.39.85	Theeraser94
+                            ////473	k1rmy.c.wam	3222223656953	223.65.69.53	Trojan -
+                            ////490	ko5ms.c.wam	2322112516953	11.251.69.53	hambimbara
+                            ////496	krimo.c.wam	3312114170785	114.170.7.85	hyperG
+                            ////502	kztbi.wam	332311424583245	114.245.83.245	Ryzen -
+                            ////507	l54ay.wam	3333247161143197	247.161.143.197	Grooy
+                            ////521	lwwao.wam	233387163179245	87.163.179.245	Akuyoy -
+                            ////542	mkxjw.wam	3333255243207197	255.243.207.197	N3M3S1S
+                            ////563	nfkb4.wam	23322220910385	22.209.103.85	MyKneeGrows
+                            ////567	ng1ye.wam	323318337188128	183.37.188.128	Scunny -
+                            //656	qwnem.wam	3333183190207197	183.190.207.197	anonymous
+                            ////726	thunderhacks	3333181133147171	181.133.147.171	thunderhacks
+                            ////785	vethc.wam	23238513651245	85.136.51.245	Jaybz -
+                            ////794	vvnf.wam	323310222143197	102.22.143.197	Mayank98
+                            ////842	xclnq.c.wam	222254336953	54.33.69.53	1nstaller
+                            //4r1fy.wam	333218413219985	184.132.199.85	Meciah
+                            //ye3mm.c.wam	33221351176953	135.117.69.53	chenweiwei
+                            //xiaominglvvl	3333243107169220	243.107.169.220	xiaominglvvl
+                            //jm2x4.wam	333212521310385	125.213.103.85	DarkSid3r
+                            //kfnx.wam	22339440143197	94.40.143.197	blueballs
+                            //1l3mm.c.wam	1233322179245	3.22.179.245	Tolgien
+                            //o4yt.wam	3333161220157109	161.220.157.109	Dear2475
+                            //3i5is.wam	2322792397185	79.239.71.85	Diante
+                            //ifsb.wam	323314216157109	142.16.157.109	SKF138
+
+                            console.log('%c    slaves:' + myslaves.length, 'color:grey')
+                            if (myslaves.length < 50) {
+
+                                if (!crackingEnabled) {
+                                    console.log('%c    auto cracking is disabled.', 'color:yellow')
+                                } else {
+                                    let targets = [
+                                        '33221351176953', '333212521310385', '1233322179245', '3333161220157109', '2322792397185', '323314216157109'
+                                    ]
+
+                                    for (const target of targets) {
+                                        for (const slave of myslaves) {
+                                            if (slave.to == target) {
+                                                //console.log('match:' + JSON.stringify(slave))
+                                                targets = targets.filter(function(t) {
+                                                    return t !== target
+                                                })
+                                            }
+                                        }
+                                    }
+
+                                    //console.log('filteredtargets:' + JSON.stringify(targets))
+
+                                    let targettocrack = undefined
+
+                                    targettocrack = targets[Math.floor(Math.random() * targets.length)];
+
+                                    for (const timeout of timeouts) {
+                                        if (timeout.from == myUserId && timeout.to == targettocrack) {
+                                            if (timeout.end_time > new(Date().getTime / 1000))
+                                                targettocrack == undefined
+                                        }
+                                    }
+
+
+                                    if (targettocrack == undefined) return
+
+                                    let targetnickname = '?'
+                                        //console.log('targettocrack:' + targettocrack)
+
+                                    for (const user of usersTable) {
+                                        if (user.data.id == targettocrack) {
+                                            targettocrack = user.data.ip_address
+                                            targetnickname = user.data.nickname
+                                        }
+                                    }
+
+                                    //console.log('new targettocrack:' + targettocrack)
+                                    //console.log('new targettocrack:' + targetnickname)
+                                    //console.log('crackerId:' + crackerId)
+
+                                    let transactiondata = {
+                                        account: 'hackersworld',
+                                        name: 'crack',
+                                        authorization: [{
+                                            actor: wax.userAccount,
+                                            permission: 'active',
+                                        }],
+                                        data: {
+                                            user: wax.userAccount,
+                                            target_ip: targettocrack,
+                                            asset_id: crackerId,
+                                        },
+                                    }
+
+                                    if (!wax.api) {
+                                        return document.getElementById('response').append('* Login first *');
+                                    }
+
+                                    //if (confirm('sign:' + JSON.stringify(transactiondata.data, null, 2))) {
+                                    try {
+                                        console.log(`    cracking from list ${targettocrack} ${targetnickname}`)
+                                        const result = await wax.api.transact({
+                                            actions: [transactiondata]
+                                        }, {
+                                            blocksBehind: 3,
+                                            expireSeconds: 30
+                                        });
+
+                                        //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                                        //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2);
+                                        document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2));
+
+                                    } catch (e) {
+
+                                        //document.getElementById('response').append(e.message);
+                                        //document.getElementById('response').innerHTML = e.message;
+                                        //document.getElementById('response').insertAdjacentHTML('afterbegin', e.message);
+                                        document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + e.message + '</span><br>');
+                                        console.log('message:' + e.message)
+
+                                    }
+                                    //}
+                                }
+
+                            } else {
+                                console.log('%c    max slaves reached, aborting new crack.', 'color:yellow')
+                            }
+
+                            //console.log(result)
+                        })
+                        .catch(error => console.log('error', error));
+                    //resolve()
+
+                } else {
+                    console.log('%c    crack is already in progress.', 'color:yellow')
+                        //resolve()
+                }
+                await new Promise(r => setTimeout(r, 1000));
+                resolve()
+
+            })
+
+        }
+
+        async function updateUsersTable() {
+
+            return new Promise(async resolve => {
+
+
+                var myHeaders = new Headers();
+                myHeaders.append("accept", "application/json");
+                myHeaders.append("accept-language", "en-US,en;q=0.5");
+                myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                var raw = "{\"json\":true,\"code\":\"hackersworld\",\"scope\":\"hackersworld\",\"table\":\"users\",\"lower_bound\":\"\",\"upper_bound\":\"\",\"index_position\":1,\"key_type\":\"\",\"limit\":\"1000\",\"reverse\":false,\"show_payer\":true}";
+
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: raw,
+                    redirect: 'follow'
+                };
+
+                try {
+                    await fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(async result => {
+                            //console.log('response.body:' + JSON.stringify(result))
+                            objRetorno = JSON.parse(result)
+                            usersTable = objRetorno.rows
+                            console.log(`%cusersTable loaded ${usersTable.length} hackers`, 'color:yellow')
+                            if (usersTable.length < 930) {
+                                await new Promise(r => setTimeout(r, 2000));
+                                console.log('%cusersTable incomplete, RELOADING...', 'color:tomato')
+                                await new Promise(r => setTimeout(r, 3000));
+                                window.location.reload();
+                            }
+
+                            await new Promise(r => setTimeout(r, 10000));
+
+                            for (const user of usersTable) {
+                                //console.log('1:' + user.data.user + ' 2:' + wax.userAccount)
+                                if (user.data.user == wax.userAccount) {
+                                    myUserId = user.data.id
+                                    console.log('%cUserId found : ' + myUserId, 'color: lime')
+                                }
+                            }
+
+
+                            if (myUserId == undefined) {
+                                console.log('UserId not detected, RELOADING...')
+                                await new Promise(r => setTimeout(r, 3000));
+                                window.location.reload();
+                            }
+
+                            await loadNpcs()
+
+                            resolve()
+                        })
+                        .catch(error => {
+                            console.log('error', error)
+                            resolve()
+                        });
+                } catch {
+                    console.log(`%c    rpc error. retrying...`)
+                }
+
+
+            })
+
+        }
+
+        async function useAntiVirus() {
+
+            return new Promise(async resolve => {
+
+                //antivirusId
+                //infectedVirusId
+
+                let transactiondata = {}
+                let assetId = undefined
+
+                // LinkedOut 39.153.40.56 [Uncommon] 3/3
+                // 3bay 66.34.17.156 [Uncommon] 3/3
+                // Anazon 97.147.17.227 [Uncommon] 3/3
+                // NiceCrosoft 189.27.117.75 [Uncommon] 3/3
+                // IMBD 52.110.171.250 [Uncommon] 3/3
+                // Mega 67.215.230.178 [Uncommon] 3/3
+                //let targetNPCs = ['39.153.40.56', '66.34.17.156', '97.147.17.227', '189.27.117.75', '52.110.171.250', '67.215.230.178']
+                //let randomUncommonNPC = Math.floor(Math.random() * targetNPCs.length) + 0
+                //console.log(`%c    random targetNPC:${randomUncommonNPC}`, 'color:grey')
+
+                if (infectedVirusId2 == undefined) infectedVirusId2 = infectedVirusId
+
+                let avstatus = antivirusIdisInUse ? 'busy' : 'idle'
+                let avstatus2 = antivirusId2isInUse ? 'busy' : 'idle'
+
+                console.log(`%c    AV1: ${avstatus}`, 'color:yellow')
+                console.log(`%c    AV2: ${avstatus2}`, 'color:yellow')
+
+                if (!antivirusIdisInUse) {
+
+                    assetId = antivirusId
+
+                    transactiondata = {
+                        account: 'hackersworld',
+                        name: 'removevirus',
+                        authorization: [{
+                            actor: wax.userAccount,
+                            permission: 'active',
+                        }],
+                        data: {
+                            user: wax.userAccount,
+                            asset_id: antivirusId,
+                            target_virus: infectedVirusId
+                        },
+                    }
+
+                } else if (!antivirusId2isInUse) {
+
+                    assetId = antivirusId2
+
+                    transactiondata = {
+                        account: 'hackersworld',
+                        name: 'removevirus',
+                        authorization: [{
+                            actor: wax.userAccount,
+                            permission: 'active',
+                        }],
+                        data: {
+                            user: wax.userAccount,
+                            asset_id: antivirusId2,
+                            target_virus: infectedVirusId2
+                        },
+                    }
+
+                }
+
+                //console.log('hasInfectedVirus:' + hasInfectedVirus)
+                //console.log('antivirusIdisInUse:' + antivirusIdisInUse)
+                //console.log('antivirusId2isInUse:' + antivirusId2isInUse)
+
+                if (hasInfectedVirus) {
+
+                    if (antivirusIdisInUse && antivirusId2isInUse) {
+                        console.log('%c    all antivirus are in use.', 'color:tomato')
+                        resolve()
+                        return
+                    }
+
+                    console.log('    removing virus from local computer...')
+                    if (!wax.api) {
+                        return document.getElementById('response').append('* Login first *');
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    try {
+                        console.log(`    removing virus ${JSON.stringify(transactiondata)}`)
+                        const result = await wax.api.transact({
+                            actions: [transactiondata]
+                        }, {
+                            blocksBehind: 3,
+                            expireSeconds: 30
+                        });
+
+                        //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                        //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2);
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2) + '<br>');
+
+                        await new Promise(r => setTimeout(r, 1000));
+                        resolve()
+
+                    } catch (e) {
+
+                        if (e.message.toString().indexOf('The virus has been deleted') >= 0) {
+                            console.log(`%c    Virus was removed, killing process asset id ${assetId}...`, 'color:yellow')
+                            await killProcess(assetId)
+                        }
+
+                        //document.getElementById('response').append(e.message);
+                        //document.getElementById('response').innerHTML = e.message;
+                        //document.getElementById('response').insertAdjacentHTML('afterbegin', e.message + '<br>');
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + e.message + '</span><br>');
+                        console.log('error:' + e.message)
+                        await new Promise(r => setTimeout(r, 1000));
+
+                        resolve()
+
+                    }
+                    //}
+
+                }
+
+                resolve()
+
+            })
+
+        }
+
+        async function activateIdleVirus() {
+
+            let installing = false // instala apenas um em cada ciclo
+
+            return new Promise(async resolve => {
+
+                mySoftware.rows.forEach(async software => {
+
+                    if (software.schema_name == 'virus' && software.template_id >= 583358 && software.template_id <= 583362 && !installing) { //Spamviruses
+                        //console.log(JSON.stringify(software))
+
+                        let virusInstalled = false
+                        myInstalledVirus.rows.forEach(installedvirus => {
+                            if (software.asset_id == installedvirus.id) virusInstalled = true
+                        });
+
+                        myProcesses.rows.forEach(process => {
+                            if (process.asset_id == software.asset_id) virusInstalled = true
+                        });
+
+                        if (!virusInstalled) {
+
+                            let spot = undefined
+
+                            var myHeaders = new Headers();
+                            myHeaders.append("accept", "application/json");
+                            myHeaders.append("accept-language", "en-US,en;q=0.5");
+                            myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                            myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                            var requestOptions = {
+                                method: 'GET',
+                                headers: myHeaders,
+                                redirect: 'follow'
+                            };
+
+                            await fetch("http://localhost:3000/uncommon", requestOptions)
+                                .then(response => response.text())
+                                .then(result => {
+                                    console.log('    freespot ip:' + result)
+                                    spot = result
+                                })
+                                .catch(error => console.log('error', error));
+
+                            //await new Promise(r => setTimeout(r, 100000));
+
+                            // Gets NPC ip to install virus and start installing
+                            //console.log('spot:' + spot)
+                            if (spot != undefined && spot != '') {
+
+                                let transactiondata = {
+                                    account: 'hackersworld',
+                                    name: 'installvirus',
+                                    authorization: [{
+                                        actor: wax.userAccount,
+                                        permission: 'active',
+                                    }],
+                                    data: {
+                                        user: wax.userAccount,
+                                        target_ip: spot,
+                                        asset_id: software.asset_id
+                                    },
+                                }
+
+                                //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                                if (!wax.api) {
+                                    return document.getElementById('response').append('* Login first *')
+                                }
+
+                                try {
+                                    console.log(`    installing ${software.asset_id} virus into ip ${spot}`)
+                                    const result = await wax.api.transact({
+                                        actions: [transactiondata]
+                                    }, {
+                                        blocksBehind: 3,
+                                        expireSeconds: 30
+                                    });
+
+                                    //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                                    //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2)
+                                    document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2) + '<br>');
+                                    installing = true
+                                    await new Promise(r => setTimeout(r, 1000))
+
+                                } catch (e) {
+
+                                    //document.getElementById('response').append(e.message);
+                                    //document.getElementById('response').innerHTML = e.message
+                                    //document.getElementById('response').insertAdjacentHTML('afterbegin', e.message + '<br>');
+                                    document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + e.message + '</span><br>');
+                                    console.log('error:' + e.message)
+                                    await new Promise(r => setTimeout(r, 1000));
+
+                                }
+                                //}
+
+                                toCollect = toCollect.filter(function(p) {
+                                    return p.id !== process.id
+                                })
+
+                                resolve()
+
+                            } else {
+
+                                console.log('    virusinstall: need valid spot id')
+                                resolve()
+
+                            }
+
+                        }
+
+                    }
+
+                });
+
+                //await new Promise(r => setTimeout(r, 1000));
+
+                resolve()
+
+            })
+        }
+
+        async function collect() {
+
+            return new Promise(async resolve => {
+
+                toCollect.forEach(async process => {
+                    console.log('process:' + JSON.stringify(process))
+
+                    if (process.id != undefined) {
+
+                        let transactiondata = {
+                            account: 'hackersworld',
+                            name: 'collect',
+                            authorization: [{
+                                actor: wax.userAccount,
+                                permission: 'active',
+                            }],
+                            data: {
+                                user: wax.userAccount,
+                                virus_id: process.id
+                            },
+                        }
+
+                        //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                        if (!wax.api) {
+                            return document.getElementById('response').append('* Login first *');
+                        }
+
+                        try {
+                            console.log(`%c    collecting pid ${process.id} balance:${getUserBalance(userAccount)}`, 'color:yellow')
+                            const result = await wax.api.transact({
+                                actions: [transactiondata]
+                            }, {
+                                blocksBehind: 3,
+                                expireSeconds: 30
+                            });
+
+                            //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                            //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2);
+                            document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2) + '<br>');
+
+                        } catch (e) {
+
+                            //document.getElementById('response').append(e.message);
+                            document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + e.message + '</span><br>');
+
+                        }
+                        //}
+
+                        //toCollect = toCollect.filter(function(p) {
+                        //return p.id !== process.id
+                        //})
+                        toCollect = []
+                        resolve()
+
+                    } else {
+
+                        console.log('    collect: need valid process id')
+                        resolve()
+
+                    }
+
+                });
+
+                await new Promise(r => setTimeout(r, 1000));
+
+                resolve()
+
+            })
+
+        }
+
+
+        async function uncrackMaster() {
+
+            return new Promise(async resolve => {
+
+                if (isUncracking) {
+                    console.log('%c    already uncracking master.', 'color:tomato')
+                    resolve()
+                }
+
+                toUncrack.forEach(async master => {
+
+                    let targetip = undefined
+                    let targetuser = undefined
+
+                    //console.log('masterfrom:' + JSON.stringify(master))
+                    console.log('toUncrack:' + JSON.stringify(master))
+                    usersTable.forEach(user => {
+                        //console.log('user:' + JSON.stringify(user.data))
+
+                        if (master.from == user.data.id) {
+                            //console.log("MATCH:" + JSON.stringify(user))
+                            targetuser = user
+                                //console.log('userfound:' + JSON.stringify(user))
+                            targetip = user.data.ip_address
+                        }
+                    });
+
+                    let transactiondata = {
+                        account: 'hackersworld',
+                        name: 'removecrack',
+                        authorization: [{
+                            actor: wax.userAccount,
+                            permission: 'active',
+                        }],
+                        data: {
+                            user: wax.userAccount,
+                            asset_id: firewallId,
+                            target_ip: targetip
+                        },
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    if (!wax.api) {
+                        return document.getElementById('response').append('* Login first *');
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    if (targetuser != undefined) {
+
+                        try {
+                            console.log(`%c    uncracking ${JSON.stringify(targetuser.data.id)} ${targetuser.data.user} ${targetuser.data.ip_address} ${targetuser.data.nickname}`, 'color:lime')
+                            const result = await wax.api.transact({
+                                actions: [transactiondata]
+                            }, {
+                                blocksBehind: 3,
+                                expireSeconds: 30
+                            });
+
+                            //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                            //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2);
+                            //document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2) + '<br>');
+                            document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:orange">' + JSON.stringify(result.processed.action_traces[0].act.name.replace('\"', '') + ' ' + targetuser.data.nickname, null, 2) + '</span><br>');
+
+                            toUncrack = []
+                                //toUncrack = toUncrack.filter(function(m) {
+                                //return m.from !== master.from
+                                //})
+
+
+                            await new Promise(r => setTimeout(r, 1000));
+
+                            resolve()
+
+                        } catch (e) {
+
+                            //document.getElementById('response').append(e.message);
+                            document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + e.message + '</span><br>');
+                            console.log('error:' + e.message)
+                            await new Promise(r => setTimeout(r, 1000));
+                            resolve()
+
+                        }
+                    } else {
+                        console.log('targetuser:' + JSON.stringify(targetuser))
+                    }
+                    //}
+
+                });
+
+                resolve()
+
+            })
+
+        }
+
+        async function claimProcess() {
+
+            return new Promise(async resolve => {
+
+                //let signing_value = Math.floor(Math.random() * (999999999999 - 111111111111 + 1)) + 111111111111;
+
+                for (const process of toClaim) {
+                    let signing_value = Math.floor(Math.random() * (999999999999 - 111111111111 + 1)) + 111111111111;
+
+                    console.log('    signing_value:' + signing_value)
+
+                    let transactiondata = {
+                        account: 'hackersworld',
+                        name: 'claimprocess',
+                        authorization: [{
+                            actor: wax.userAccount,
+                            permission: 'active',
+                        }],
+                        data: {
+                            user: wax.userAccount,
+                            assoc_id: process.asset_id,
+                            signing_value: signing_value
+                        },
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    if (!wax.api) {
+                        return document.getElementById('response').append('* Login first *');
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    try {
+                        console.log(`    claiming process ${process.asset_id} `)
+                        const result = await wax.api.transact({
+                            actions: [transactiondata]
+                        }, {
+                            blocksBehind: 3,
+                            expireSeconds: 30
+                        });
+
+                        //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                        //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2);
+                        //document.getElementById('response').style.color = 'yellow';
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:yellow">' + JSON.stringify(result.processed.action_traces[0].act.name.replace('\"', ''), null, 2) + '</span><br>');
+
+                        toClaim = toClaim.filter(function(p) {
+                            return p.id !== process.id
+                        })
+
+                        await new Promise(r => setTimeout(r, 6000));
+
+                        resolve()
+
+                    } catch (e) {
+
+                        //document.getElementById('response').style.color = 'yellow';
+                        //document.getElementById('response').append(e.message);
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + e.message + '</span><br>');
+                        //console.log('e.message:' + e.message)
+
+                        if (e.message.toString().indexOf('Cannot find target virus') >= 0) {
+                            await killProcess(process.asset_id)
+                            toClaim = toClaim.filter(function(p) {
+                                return p.asset_id !== process.asset_id
+                            })
+
+                        }
+
+                        if (e.message.toString().indexOf('The target is vanished, kill the process!') >= 0) {
+                            await killProcess(process.asset_id)
+                            toClaim = toClaim.filter(function(p) {
+                                return p.asset_id !== process.asset_id
+                            })
+
+                        }
+
+                        toClaim = toClaim.filter(function(p) {
+                            return p.id !== process.id
+                        })
+
+                        await new Promise(r => setTimeout(r, 6000));
+
+                    }
+                    //}
+
+                }
+
+                resolve()
+
+            })
+
+        }
+
+        async function revealProcess() {
+
+            return new Promise(async resolve => {
+
+
+                for (const process of toReveal) {
+
+                    let transactiondata = {
+                        account: 'hackersworld',
+                        name: 'rvlprocess',
+                        authorization: [{
+                            actor: wax.userAccount,
+                            permission: 'active',
+                        }],
+                        data: {
+                            user: wax.userAccount,
+                            process_id: process.asset_id,
+                        },
+                    }
+
+                    if (!wax.api) {
+                        return document.getElementById('response').append('* Login first *');
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    try {
+                        console.log(`    revealing process ${process.asset_id}`)
+                        const result = await wax.api.transact({
+                            actions: [transactiondata]
+                        }, {
+                            blocksBehind: 3,
+                            expireSeconds: 30
+                        });
+
+                        //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                        //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2);
+                        //document.getElementById('response').style.color = 'limegreen';
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:limegreen">' + JSON.stringify(result.processed.action_traces[0].act.name.replace('\"', ''), null, 2) + '</span><br>');
+
+                        toReveal = toReveal.filter(function(p) {
+                            return p.asset_id !== process.asset_id
+                        })
+
+                        await new Promise(r => setTimeout(r, 6000));
+
+                        resolve()
+
+                    } catch (e) {
+
+                        //document.getElementById('response').append(e.message);
+                        //document.getElementById('response').innerHTML = e.message;
+                        //document.getElementById('response').style.color = 'limegreen';
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + e.message + '</span><br>');
+                        console.log('message:' + e.message)
+
+                        if (e.message.indexOf('virus count reached maximum') >= 0) {
+                            console.log('    ' + e.message)
+                            await killProcess(process.asset_id)
+                        } else if (e.message.indexOf('Process is not complete') >= 0) {
+                            toReveal = toReveal.filter(function(p) {
+                                return p.asset_id !== process.asset_id
+                            })
+                        } else if (e.message.indexOf('The target virus has already been removed') >= 0) {
+                            await killProcess(process.asset_id)
+                            toReveal = toReveal.filter(function(p) {
+                                return p.asset_id !== process.asset_id
+                            })
+                        } else if (e.message.indexOf('Cannot find target virus') >= 0) {
+                            await killProcess(process.asset_id)
+                            toReveal = toReveal.filter(function(p) {
+                                return p.asset_id !== process.asset_id
+                            })
+
+                        }
+
+                        await new Promise(r => setTimeout(r, 6000));
+
+                    }
+                    //}
+
+                }
+
+                resolve()
+
+            })
+
+        }
+
+        async function killProcess(id) {
+
+            return new Promise(async resolve => {
+
+                let transactiondata = {
+                    account: 'hackersworld',
+                    name: 'cancelprcss',
+                    authorization: [{
+                        actor: wax.userAccount,
+                        permission: 'active',
+                    }],
+                    data: {
+                        user: wax.userAccount,
+                        process_id: id,
+                    },
+                }
+
+                if (!wax.api) {
+                    return document.getElementById('response').append('* Login first *');
+                }
+
+                //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                try {
+                    console.log(`%c    killing ${id} process`, 'color: tomato')
+                    const result = await wax.api.transact({
+                        actions: [transactiondata]
+                    }, {
+                        blocksBehind: 3,
+                        expireSeconds: 30
+                    });
+
+                    //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                    //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2)
+                    //document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2) + '<br>');
+                    document.getElementById('response').insertAdjacentHTML('afterbegin', '<span style="color:tomato">' + JSON.stringify(result.processed.action_traces[0].act.name.replace('\"', '') + ' ' + targetuser.data.nickname, null, 2) + '</span><br>');
+
+
+                } catch (e) {
+
+                    //document.getElementById('response').append(e.message);
+                    //document.getElementById('response').innerHTML = e.message
+                    document.getElementById('response').insertAdjacentHTML('afterbegin', e.message + '<br>');
+                    console.log('error:' + e.message)
+                        //await new Promise(r => setTimeout(r, 6000));
+
+                }
+                //}
+
+                resolve()
+
+            })
+
+        }
+
+        async function killProcessOld(id) {
+
+            return new Promise(async resolve => {
+
+                toReveal.forEach(async process => {
+
+                    let transactiondata = {
+                        account: 'hackersworld',
+                        name: 'cancelprcss',
+                        authorization: [{
+                            actor: wax.userAccount,
+                            permission: 'active',
+                        }],
+                        data: {
+                            user: wax.userAccount,
+                            process_id: id,
+                        },
+                    }
+
+                    if (!wax.api) {
+                        return document.getElementById('response').append('* Login first *');
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    try {
+                        console.log(`%c    killing ${id} process`, 'color: tomato')
+                        const result = await wax.api.transact({
+                            actions: [transactiondata]
+                        }, {
+                            blocksBehind: 3,
+                            expireSeconds: 30
+                        });
+
+                        //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                        //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2)
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2) + '<br>');
+
+                        toReveal = toReveal.filter(function(p) {
+                            return p.asset_id !== id
+                        })
+
+                        await new Promise(r => setTimeout(r, 6000));
+
+                    } catch (e) {
+
+                        //document.getElementById('response').append(e.message);
+                        //document.getElementById('response').innerHTML = e.message
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', e.message + '<br>');
+                        console.log('error:' + e.message)
+                        await new Promise(r => setTimeout(r, 6000));
+
+                    }
+                    //}
+
+                });
+
+                toClaim.forEach(async process => {
+
+                    let transactiondata = {
+                        account: 'hackersworld',
+                        name: 'cancelprcss',
+                        authorization: [{
+                            actor: wax.userAccount,
+                            permission: 'active',
+                        }],
+                        data: {
+                            user: wax.userAccount,
+                            process_id: id,
+                        },
+                    }
+
+                    if (!wax.api) {
+                        return document.getElementById('response').append('* Login first *');
+                    }
+
+                    //if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                    try {
+                        console.log(`    killing ${id} process`.brighRed)
+                        const result = await wax.api.transact({
+                            actions: [transactiondata]
+                        }, {
+                            blocksBehind: 3,
+                            expireSeconds: 30
+                        });
+
+                        //document.getElementById('response').append(JSON.stringify(result, null, 2))
+                        //document.getElementById('response').innerHTML = JSON.stringify(result.processed.action_traces[0].act, null, 2)
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', JSON.stringify(result.processed.action_traces[0].act, null, 2) + '<br>');
+
+                        toClaim = toClaim.filter(function(p) {
+                            return p.asset_id !== id
+                        })
+
+                        await new Promise(r => setTimeout(r, 1000));
+
+                    } catch (e) {
+
+                        //document.getElementById('response').append(e.message);
+                        //document.getElementById('response').innerHTML = e.message
+                        document.getElementById('response').insertAdjacentHTML('afterbegin', e.message + '<br>');
+                        console.log('error:' + e.message)
+                        await new Promise(r => setTimeout(r, 1000));
+
+                    }
+                    //}
+
+                });
+
+                resolve()
+
+            })
+
+        }
+
+        async function templateAsync() {
+
+            return new Promise(async resolve => {
+
+                resolve()
+
+            })
+
+        }
+
+        async function checkForMasters() {
+
+            return new Promise(async resolve => {
+
+                var myHeaders = new Headers();
+                myHeaders.append("accept", "application/json");
+                myHeaders.append("accept-language", "en-US,en;q=0.5");
+                myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                var raw = "{\"code\":\"hackersworld\",\"table\":\"slaves\",\"scope\":\"hackersworld\",\"json\":true,\"index_position\":\"3\",\"key_type\":\"i64\",\"encode_type\":\"\",\"lower_bound\":\"" + myUserId + "\",\"upper_bound\":\"" + myUserId + "\",\"limit\":100,\"reverse\":false,\"show_payer\":false}";
+
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: raw,
+                    redirect: 'follow'
+                };
+
+                try {
+
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(result => {
+
+                            myMasters = JSON.parse(result)
+
+                            if (myMasters.rows.length == 0) {
+                                console.log('%c    no master detected.', 'color:cyan')
+                            } else {
+                                // Master detection
+                                myMasters.rows.forEach(master => {
+                                    //Uncrack master
+                                    if (!isUncracking) {
+                                        //var audio = new Audio('https://freesfx.co.uk/sound/13633_1459783960.mp3');
+                                        //audio.volume = 0.1;
+                                        //audio.play();
+
+                                        toUncrack.push(master)
+                                        console.log('    toUncrack++:' + JSON.stringify(master))
+                                    }
+
+                                })
+                            }
+                            resolve()
+
+                        })
+                        //.catch(error => console.log('error', error));
+
+                } catch (error) {
+                    //console.log('fetch error')
+                    console.log('error:' + error.message)
+                    console.log('ejecting...')
+                    await new Promise(r => setTimeout(r, 1000));
+                    window.location.reload();
+                    resolve()
+                }
+
+            })
+
+        }
+
+        async function checkForInfectedVirus() {
+
+            return new Promise(async resolve => {
+
+                try {
+
+                    hasInfectedVirus = false
+                        //console.log('viruseslength:' + viruses.length)
+                    viruses.forEach(virus => {
+                        //console.log('viruse:' + JSON.stringify(virus))
+
+
+                        if (virus.data.to == myUserId && virus.data.remove_time == 0) {
+                            //console.log('match')
+
+                            //var audio = new Audio('https://freesfx.co.uk/sound/13633_1459783960.mp3');
+                            //audio.volume = 0.1;
+                            //audio.play();
+                            hasInfectedVirus = true
+
+                            if (infectedVirusId === undefined)
+                                infectedVirusId = virus.data.id
+                            else
+                                infectedVirusId2 = virus.data.id
+
+
+                            let nickname = '????'
+
+                            usersTable.forEach(user => {
+                                //console.log(JSON.stringify(virus))
+                                //console.log(JSON.stringify(user))
+                                if (user.data.id == virus.data.from) {
+                                    //console.log('MATCH:' + JSON.stringify(user))
+                                    nickname = user.data.nickname
+                                }
+
+                            });
+
+                            console.log(`%c    infectedVirus from ${nickname} ${virus.data.multiplier}`, "color: red;")
+                                //console.log(JSON.stringify(virus))
+                        }
+
+                    })
+
+                    if (!hasInfectedVirus) console.log("%c    computer is clean.", "color:cyan")
+
+                    resolve()
+
+                    //.catch(error => console.log('error', error));
+
+                } catch (e) {
+                    //console.log('read error')
+                    console.log('error:' + e.message)
+                    resolve()
+                }
+
+
+            })
+
+        }
+
+        async function checkMySoftware() {
+
+            return new Promise(async resolve => {
+                antivirusId === undefined
+                antivirusId2 === undefined
+
+                var myHeaders = new Headers();
+                myHeaders.append("accept", "application/json");
+                myHeaders.append("accept-language", "en-US,en;q=0.5");
+                myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                var raw = "{\"code\":\"hackersworld\",\"table\":\"stakedtools\",\"scope\":\"" + userAccount + "\",\"json\":true,\"encode_type\":\"\",\"limit\":100,\"reverse\":false,\"show_payer\":false}";
+
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: raw,
+                    redirect: 'follow'
+                };
+
+                try {
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(result => {
+
+                            mySoftware = JSON.parse(result)
+
+                            // Staked virus detection
+                            mySoftware.rows.forEach(software => {
+                                //console.log('software:'+JSON.stringify(software))
+                                if (software.schema_name == 'virus' && software.template_id >= 583358 && software.template_id <= 583362) totalVirusStaked++ //Spamvirus
+                                    else if (software.schema_name == 'antivirus') {
+                                        if (antivirusId === undefined)
+                                            antivirusId = software.asset_id
+                                        else
+                                            antivirusId2 = software.asset_id
+                                    } else if (software.schema_name == 'firewall') firewallId = software.asset_id
+                                else if (software.schema_name == 'cracker') crackerId = software.asset_id
+
+                            })
+
+                            console.log(`%c    totalVirusStaked: ${totalVirusStaked}`, 'color:grey')
+
+                        })
+                        //.catch(error => console.log('error', error));
+
+                } catch (e) {
+                    //console.log('read error')
+                    console.log('error:' + e.message)
+
+                }
+
+                resolve()
+            })
+
+        }
+
+        async function checkForMyInstalledRansomware() {
+
+            return new Promise(async resolve => {
+
+
+                var myHeaders = new Headers();
+                myHeaders.append("accept", "application/json");
+                myHeaders.append("accept-language", "en-US,en;q=0.5");
+                myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                var raw = "{\"code\":\"hackersworld\",\"table\":\"ransomws\",\"scope\":\"hackersworld\",\"json\":true,\"index_position\":\"2\",\"key_type\":\"i64\",\"encode_type\":\"\",\"lower_bound\":\"" + myUserId + "\",\"upper_bound\":\"" + myUserId + "\",\"limit\":100,\"reverse\":false,\"show_payer\":false}";
+
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: raw,
+                    redirect: 'follow'
+                };
+
+                try {
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(result => {
+
+                            // Installed viruses
+                            myInstalledRansomwares = JSON.parse(result)
+
+                            let rarity = '?'
+                            let counter = 0
+                            myInstalledRansomwares.rows.forEach(ransomware => {
+                                counter++
+                                //console.log('ransomwareinfo:' + JSON.stringify(ransomware))
+
+                                let timeRemaining = 24
+
+                                if (ransomware.template_id == '610028') {
+                                    rarity = "Common"
+                                } else if (ransomware.template_id == '610030') {
+                                    rarity = "Uncommon"
+                                } else if (ransomware.template_id == '610032') {
+                                    rarity = "Rare"
+                                } else if (ransomware.template_id == '610033') {
+                                    rarity = "Epic"
+                                } else if (ransomware.template_id == '610034') {
+                                    rarity = "Legendary"
+                                }
+
+                                let hoursPassed = ((((new Date().getTime() - (ransomware.access_time * 1000)) / 1000) / 60) / 60)
+                                timeRemaining = 24 - hoursPassed
+
+
+                                let wasRemoved = ransomware.remove_time != 0
+                                if (!wasRemoved) {
+
+                                    if (timeRemaining < 0 && ransomware.pay_amount > 0) {
+                                        if (ransomware.pay_amount > 0) {
+                                            toCollect.push(ransomware)
+                                        }
+                                    }
+                                } else {
+                                    if (ransomware.pay_amount > 0) {
+                                        toCollect.push(ransomware)
+                                    }
+
+                                }
+
+                                if (!wasRemoved) {
+                                    if (rarity == 'Common')
+                                        console.log(`%c    r:${counter} id:${ransomware.id} c:${ransomware.claims.length}/6 cc:${ransomware.claim_chance}% pa:${ransomware.pay_amount / 10000} t:${timeRemaining.toFixed(2)}h `, "color: lightgrey")
+                                    if (rarity == 'Uncommon')
+                                        console.log(`%c    r:${counter} id:${ransomware.id} c:${ransomware.claims.length}/6 cc:${ransomware.claim_chance}% pa:${ransomware.pay_amount / 10000} t:${timeRemaining.toFixed(2)}h `, "color: #40bf40")
+                                    if (rarity == 'Rare')
+                                        console.log(`%c    r:${counter} id:${ransomware.id} c:${ransomware.claims.length}/6 cc:${ransomware.claim_chance}% pa:${ransomware.pay_amount / 10000} t:${timeRemaining.toFixed(2)}h `, "color: #3385ff")
+                                    if (rarity == 'Epic')
+                                        console.log(`%c    r:${counter} id:${ransomware.id} c:${ransomware.claims.length}/6 cc:${ransomware.claim_chance}% pa:${ransomware.pay_amount / 10000} t:${timeRemaining.toFixed(2)}h `, "color: magenta")
+                                }
+
+                            })
+                            console.log()
+
+                            resolve()
+
+                        })
+                        //.catch(error => console.log('error', error));
+                } catch (e) {
+                    //console.log('read error')
+                    console.log('error:' + e.message)
+                    resolve()
+                }
+
+            })
+
+        }
+
+        async function checkForMyInstalledVirus() {
+
+            return new Promise(async resolve => {
+
+
+                var myHeaders = new Headers();
+                myHeaders.append("accept", "application/json");
+                myHeaders.append("accept-language", "en-US,en;q=0.5");
+                myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                var raw = "{\"code\":\"hackersworld\",\"table\":\"viruses\",\"scope\":\"hackersworld\",\"json\":true,\"index_position\":\"2\",\"key_type\":\"i64\",\"encode_type\":\"\",\"lower_bound\":\"" + myUserId + "\",\"upper_bound\":\"" + myUserId + "\",\"limit\":100,\"reverse\":false,\"show_payer\":false}";
+
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: raw,
+                    redirect: 'follow'
+                };
+
+                try {
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(result => {
+
+                            // Installed viruses
+                            myInstalledVirus = JSON.parse(result)
+
+                            let rarity = '?'
+                            let counter = 0
+                            myInstalledVirus.rows.forEach(virus => {
+                                counter++
+                                //console.log('virusinfo:' + JSON.stringify(virus))
+
+                                let timeRemaining = 24
+
+                                if (virus.template_id == '583358') {
+                                    rarity = "Common"
+                                } else if (virus.template_id == '583359') {
+                                    rarity = "Uncommon"
+                                } else if (virus.template_id == '583360') {
+                                    rarity = "Rare"
+                                } else if (virus.template_id == '583361') {
+                                    rarity = "Epic"
+                                }
+
+                                let hoursPassed = ((((new Date().getTime() - (virus.last_collect * 1000)) / 1000) / 60) / 60)
+                                timeRemaining = 24 - hoursPassed
+
+
+                                let wasRemoved = virus.remove_time != 0
+                                if (!wasRemoved) {
+
+                                    if (timeRemaining < 0 && virus.multiplier > 0) {
+                                        if (virus.multiplier > 0) {
+                                            toCollect.push(virus)
+                                        }
+                                    }
+                                } else {
+                                    if (virus.multiplier > 0) {
+                                        toCollect.push(virus)
+                                    }
+
+                                }
+
+                                if (!wasRemoved) {
+                                    if (rarity == 'Common')
+                                        console.log(`%c    v:${counter} id:${virus.id} c:${virus.collect_count} m:${virus.multiplier} t:${timeRemaining.toFixed(2)}h `, "color: lightgrey")
+                                    if (rarity == 'Uncommon')
+                                        console.log(`%c    v:${counter} id:${virus.id} c:${virus.collect_count} m:${virus.multiplier} t:${timeRemaining.toFixed(2)}h `, "color: #40bf40")
+                                    if (rarity == 'Rare')
+                                        console.log(`%c    v:${counter} id:${virus.id} c:${virus.collect_count} m:${virus.multiplier} t:${timeRemaining.toFixed(2)}h `, "color: #3385ff")
+                                    if (rarity == 'Epic')
+                                        console.log(`%c    v:${counter} id:${virus.id} c:${virus.collect_count} m:${virus.multiplier} t:${timeRemaining.toFixed(2)}h `, "color: magenta")
+                                }
+
+                            })
+
+                            console.log()
+                            resolve()
+
+                        })
+                        //.catch(error => console.log('error', error));
+                } catch (e) {
+                    //console.log('read error')
+                    console.log('error:' + e.message)
+                    resolve()
+                }
+
+            })
+
+        }
+
+        async function checkMyProcesses() {
+
+            return new Promise(async resolve => {
+
+                var myHeaders = new Headers();
+
+                myHeaders.append("accept", "application/json");
+                myHeaders.append("accept-language", "en-US,en;q=0.5");
+                myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                var raw = "{\r\n    \"code\": \"hackersworld\",\r\n    \"table\": \"processes\",\r\n    \"scope\": \"hackersworld\",\r\n    \"json\": true,\r\n    \"index_position\": \"2\",\r\n    \"key_type\": \"i64\",\r\n    \"encode_type\": \"\",\r\n    \"lower_bound\": \"" + myUserId + "\",\r\n    \"upper_bound\": \"" + myUserId + "\",\r\n    \"limit\": 300,\r\n    \"reverse\": false,\r\n    \"show_payer\": false\r\n}";
+
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: raw,
+                    redirect: 'follow'
+                };
+
+                try {
+
+                    fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                        .then(response => response.text())
+                        .then(async result => {
+
+                            if (JSON.parse(result).rows.length == 0) console.log('%c    no processes running.', 'color:cyan')
+
+                            myProcesses = JSON.parse(result)
+
+                            //console.log(`%c    myProcesses: ${JSON.stringify(myProcesses)}`, 'color:yellow')
+
+                            qtdRemovingVirus = 0
+                            isRemovingVirus = false
+                            isUncracking = false
+                            isCracking = false
+                            antivirusIdisInUse = false
+                            antivirusId2isInUse = false
+
+                            // Gets all processes
+                            myProcesses.rows.forEach(async process => {
+                                //console.log('process:' + JSON.stringify(process))
+
+                                let dtnow = (new Date().getTime() / 1000).toFixed(0)
+
+                                let nickname = '????'
+                                let isnpc = false
+
+                                usersTable.forEach(user => {
+                                    //console.log('user:' + JSON.stringify(user.data.id))
+                                    if (user.data.id == process.to) {
+                                        nickname = `${user.data.nickname}`
+                                    }
+
+                                });
+
+                                if (nickname == '????') {
+                                    npclist.forEach(npc => {
+                                        //console.log('user:' + JSON.stringify(user.data.id))
+                                        if (npc.data.id == process.to) {
+                                            //console.log(JSON.stringify(npc))
+                                            nickname = npc.data.user
+                                            isnpc = true
+                                        }
+
+                                    });
+
+                                }
+
+                                if (isnpc) {
+                                    console.log(`%c    ${process.action_type} a:${process.asset_id} t:${process.to} ta:${process.target_asset} c:${process.chance} n:` + `%c${nickname}` + `%c ` + `${((Number(process.end_time) - Number(dtnow)) / 60).toFixed(2)}m`, 'color:lime', 'color:lime', 'color:orange')
+                                } else {
+                                    console.log(`%c    ${process.action_type} a:${process.asset_id} t:${process.to} ta:${process.target_asset} c:${process.chance} n:` + `%c${nickname}` + `%c ` + `${((Number(process.end_time) - Number(dtnow)) / 60).toFixed(2)}m`, 'color:lime', 'color:red', 'color:orange')
+                                }
+
+                                //console.log('   current_time:' + timeNow)
+                                //console.log('   process1:' + JSON.stringify(process, null, 2))
+                                //console.log('   process2:' + process.action_type)
+
+                                //console.log('asset_id:' + process.asset_id)
+                                //console.log('dtnow   :' + dtnow)
+                                //console.log('end_time:' + process.end_time)
+                                //console.log('wait time:' + ((Number(process.end_time) - Number(dtnow)) / 60).toFixed(2) + 'm')
+
+                                if (Number(dtnow) > Number(process.end_time)) {
+
+                                    if (process.claimed == 0) {
+                                        console.log(`%c    toClaim++:${JSON.stringify(process)}`, 'color:yellow')
+                                        if (!toClaim.filter(p => p.asset_id === process.asset_id).length > 0)
+                                            toClaim.push(process)
+                                    } else {
+                                        console.log(`%c    toReveal++:${JSON.stringify(process)}`, 'color:yellow')
+                                        if (!toReveal.filter(p => p.asset_id === process.asset_id).length > 0)
+                                            toReveal.push(process)
+                                    }
+                                }
+
+
+                                if (process.action_type == 'CRACKING') {
+                                    isCracking = true
+
+                                } else if (process.action_type == 'REMOVE_CRACK') {
+
+                                    isUncracking = true
+                                        //console.log(`%c    uncrack:${((Number(process.end_time) - Number(dtnow)) / 60).toFixed(2)}m`, 'color:yellow')
+                                } else if (process.action_type == 'REMOVE_VIRUS') {
+                                    //console.log('removevirus:' + JSON.stringify(process))
+
+                                    if (process.asset_id == antivirusId) antivirusIdisInUse = true
+                                    if (process.asset_id == antivirusId2) antivirusId2isInUse = true
+
+                                    isRemovingVirus = true
+                                    qtdRemovingVirus++
+                                    //console.log(`%c    unvirus:${((Number(process.end_time) - Number(dtnow)) / 60).toFixed(2)}m`, 'color:yellow')
+                                    //} else if (process.claimed == 0 && Number(dtnow) > Number(process.end_time)) {
+                                    //console.log('toClaim++:' + JSON.stringify(process))
+                                    //toClaim.push(process)
+                                    //} else if (process.claimed == 1 && process.rand_received == 1) {
+                                    //console.log('toReveal++:' + JSON.stringify(process))
+                                    //toReveal.push(process)
+                                } else {
+                                    //console.log(`%c    await:${((Number(process.end_time) - Number(dtnow)) / 60).toFixed(2)}m`, 'color:yellow')
+                                }
+
+                            });
+
+                            resolve()
+
+                        })
+                        //.catch(error => console.log('error', error));
+
+                } catch (e) {
+                    //console.log('read error')
+                    console.log('error:' + e.message)
+                    resolve()
+                }
+
+                //resolve()
+
+            })
+
+        }
+
+        async function sign() {
+
+            let transactiondata = {
+                account: 'eosio',
+                name: 'delegatebw',
+                authorization: [{
+                    actor: wax.userAccount,
+                    permission: 'active',
+                }],
+                data: {
+                    from: wax.userAccount,
+                    receiver: wax.userAccount,
+                    stake_net_quantity: '0.00000001 WAX',
+                    stake_cpu_quantity: '0.00000000 WAX',
+                    transfer: false,
+                    memo: 'This is a WaxJS/Cloud Wallet Demo.'
+                },
+            }
+
+            if (confirm('sign:' + JSON.stringify(transactiondata, null, 2))) {
+                if (!wax.api) {
+                    return document.getElementById('response').append('* Login first *');
+                }
+
+                try {
+                    const result = await wax.api.transact({
+                        actions: [transactiondata]
+                    }, {
+                        blocksBehind: 3,
+                        expireSeconds: 30
+                    });
+                    document.getElementById('response').append(JSON.stringify(result, null, 2))
+                } catch (e) {
+                    document.getElementById('response').append(e.message);
+                }
+            }
+
+        }
+
+        preStart()
+
+        async function preStart() {
+
+            //console.log('=--------> init updateUsersTable')
+            await updateUsersTable()
+
+            await new Promise(r => setTimeout(r, 6000));
+            if (stopClicked) {
+                console.log('STOPPED BY USER => ' + userAccount)
+
+            } else if (isLoggedIn && !botRunning && !stopClicked) {
+                console.log('AUTOSTART => ' + userAccount)
+                startBot()
+
+            } else if (botRunning) {
+                console.log('AUTOSTART => BOT IS ALREADY RUNNING.')
+            } else {
+                console.log('AUTOSTART => NOT LOGGED IN, RELOADING...')
+                await new Promise(r => setTimeout(r, 3000));
+                window.location.reload();
+            }
+
+            await new Promise(r => setTimeout(r, 6000000));
+            console.log('AUTORELOAD')
+            await new Promise(r => setTimeout(r, 3000));
+            window.location.reload();
+        }
+
+        function getUserBalance(userwallet) {
+
+            let ubl = -1
+
+            usersTable.forEach(user => {
+                if (user.data.user === userwallet)
+                    ubl = Number(user.data.balance / 10000).toFixed(4)
+            });
+
+            return ubl
+        }
+
+        async function loadNpcs() {
+
+            return new Promise(async resolve => {
+
+
+                var myHeaders = new Headers();
+                myHeaders.append("accept", "application/json");
+                myHeaders.append("accept-language", "en-US,en;q=0.5");
+                myHeaders.append("content-type", "text/plain;charset=UTF-8");
+                myHeaders.append("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+
+                var raw = "{\"json\":true,\"code\":\"hackersworld\",\"scope\":\"hackersworld\",\"table\":\"npcs\",\"lower_bound\":\"\",\"upper_bound\":\"\",\"index_position\":1,\"key_type\":\"\",\"limit\":\"1000\",\"reverse\":false,\"show_payer\":true}";
+
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: raw,
+                    redirect: 'follow'
+                };
+
+                await fetch("https://" + rpc + "/v1/chain/get_table_rows", requestOptions)
+                    .then(response => response.text())
+                    .then(async result => {
+                        //console.log('response.body:' + JSON.stringify(result))
+
+                        let objResponse = JSON.parse(result)
+                        npclist = objResponse.rows
+                        console.log('%cnpcsize:' + npclist.length, 'color: yellow')
+
+                        resolve()
+                    })
+                    .catch(error => {
+                        console.log('error', error)
+                        resolve()
+                    });
+
+
+
+            })
+
+        }
+    </script>
+</body>
+
+</html>
