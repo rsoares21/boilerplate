@@ -28,10 +28,23 @@
             <button id="logout" onclick="logout()">Log out</button>
         </div>
 
+        <button id="validateTransaction" onclick="validateTransaction('test123')">Validate Transaction API Test</button>
+
         <div class="section">
             <h2>Transaction Response :</h2>
             <code id="response"></code>
         </div>
+
+        <div class="section">
+            <h2>Transaction Hash:</h2>
+            <code id="transactionHash"></code>
+        </div>
+
+        <div class="section">
+            <h2>Transaction Validation Result:</h2>
+            <p id="validationResult"></p>
+        </div>        
+        
     </div>
 
     <script src='waxjs.js'></script>

@@ -2,6 +2,8 @@ const wax = new waxjs.WaxJS({
     rpcEndpoint: 'https://wax.greymass.com'
 });
 
+let transactionHash = null; // Armazenará o hash da transação
+
 //automatically check for credentials
 autoLogin();
 
@@ -61,7 +63,12 @@ async function sign() {
             blocksBehind: 3,
             expireSeconds: 30
         });
+        transactionHash = result.transaction_id;
+        document.getElementById('transactionHash').textContent = transactionHash; // Exibe o hash da transação
         document.getElementById('response').textContent = JSON.stringify(result, null, 2)
+        await validateTransaction(transactionHash); // Envia o hash para validação no backend
+        document.getElementById('validationResult').textContent = data.message;
+
     } catch (e) {
         document.getElementById('response').textContent = e.message;
     }
@@ -78,6 +85,31 @@ async function logout() {
     } else {
         document.getElementById('response').append('* Login first *');
     }
-
     
 }
+
+// Função para enviar o hash da transação para validação no backend
+async function validateTransaction(transactionHash) {
+    try {
+        const response = await fetch('http://localhost:8080/verifyTransaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ transactionHash: transactionHash })
+        });
+
+        if (!response.ok) {
+            // Lida com erros de resposta
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+        }
+
+        const data = await response.json();
+        document.getElementById('validationResult').textContent = data.message; // Exibe o resultado da validação no frontend
+    } catch (error) {
+        document.getElementById('validationResult').textContent = 'Error: ' + error.message;
+        console.error('Error:', error);
+    }
+}
+
