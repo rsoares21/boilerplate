@@ -25,6 +25,7 @@ h1, h2 {
 .autologin {
     color: #4caf50;
     font-weight: bold;
+    font-size: small;
 }
 
 .loginresponse {
@@ -35,7 +36,19 @@ h1, h2 {
 button {
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #4caf50;
+    background-color: limegreen;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'Consolas';
+}
+
+.bt-login {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: orange;
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -43,8 +56,35 @@ button {
     transition: background-color 0.3s;
 }
 
+.bt-logout {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: lightblue;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.bt-sign-transaction {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: lightblue;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.sc-response {
+    color: black;
+    font-weight: bold;
+}
+
 button:hover {
-    background-color: #45a049;
+    background-color: black;
 }
 
 code {
@@ -53,4 +93,12 @@ code {
     padding: 10px;
     border-radius: 5px;
     overflow-x: auto;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 600px) {
+    button {
+        padding: 15px 30px;
+        font-size: 20px;
+    }
 }

@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "javascript-obfuscator": "^4.1.0",
+    "uglify-js": "^3.17.4"
   }
 }

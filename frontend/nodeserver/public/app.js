@@ -4,6 +4,8 @@ const wax = new waxjs.WaxJS({
 
 let transactionHash = null; // Armazenará o hash da transação
 
+let generatedHash = ''; // Armazenará o hash gerado pelo backend
+
 //automatically check for credentials
 autoLogin();
 
@@ -13,8 +15,12 @@ async function autoLogin() {
     if (isAutoLoginAvailable) {
         let userAccount = wax.userAccount;
         let pubKeys = wax.pubKeys;
-        let str = 'AutoLogin enabled for account: ' + userAccount + '<br/>Active: ' + pubKeys[0] + '<br/>Owner: ' + pubKeys[1]
+        let str = 'AutoLogin enabled for account: ' + userAccount ;
         document.getElementById('autologin').insertAdjacentHTML('beforeend', str);
+        document.getElementById('button-logout').style.backgroundColor = 'orangered';
+        document.getElementById('button-login').style.backgroundColor = 'lightblue';
+        document.getElementById('button-sign-transaction').style.backgroundColor = 'limegreen';
+        document.getElementById('response').textContent = '';
     } else {
         document.getElementById('autologin').insertAdjacentHTML('beforeend', 'Not auto-logged in');
     }
@@ -30,6 +36,10 @@ async function login() {
             let pubKeys = wax.pubKeys;
             let str = 'Account: ' + userAccount + '<br/>Active: ' + pubKeys[0] + '<br/>Owner: ' + pubKeys[1]
             document.getElementById('loginresponse').innerHTML = str;
+            document.getElementById('button-logout').style.backgroundColor = 'orangered';
+            document.getElementById('button-login').style.backgroundColor = 'lightblue';
+            document.getElementById('button-sign-transaction').style.backgroundColor = 'limegreen';
+            document.getElementById('response').textContent = '';
         } catch (e) {
             document.getElementById('loginresponse').innerHTML = e.message;
         }
@@ -38,25 +48,34 @@ async function login() {
 
 async function sign() {
     if (!wax.api) {
+        document.getElementById('response').style.color = 'red';
         return document.getElementById('response').append('* Login first *');
     }
+    
+    document.getElementById('response').style.color = 'green';
+    document.getElementById('response').textContent = 'Sending transaction...';
+
+    document.getElementById('transactionHash').textContent = '';
+    document.getElementById('validationResult').textContent = '';
 
     try {
+
+        generatedHash = await getGeneratedHash();
+        console.log('generatedHash', generatedHash);
+
         const result = await wax.api.transact({
             actions: [{
-                account: 'eosio',
-                name: 'delegatebw',
+                account: 'eosio.token',
+                name: 'transfer',
                 authorization: [{
                     actor: wax.userAccount,
                     permission: 'active',
                 }],
                 data: {
                     from: wax.userAccount,
-                    receiver: wax.userAccount,
-                    stake_net_quantity: '0.00000001 WAX',
-                    stake_cpu_quantity: '0.00000000 WAX',
-                    transfer: false,
-                    memo: 'This is a WaxJS/Cloud Wallet Demo.'
+                    to: 'rizzlesizzle',
+                    quantity: '0.00000001 WAX',
+                    memo: generatedHash
                 },
             }]
         }, {
@@ -64,12 +83,14 @@ async function sign() {
             expireSeconds: 30
         });
         transactionHash = result.transaction_id;
+        document.getElementById('response').style.color = 'cornflowerblue';
+        document.getElementById('response').textContent = JSON.stringify(result.processed.receipt.status, null, 2)
         document.getElementById('transactionHash').textContent = transactionHash; // Exibe o hash da transação
-        document.getElementById('response').textContent = JSON.stringify(result, null, 2)
-        await validateTransaction(transactionHash); // Envia o hash para validação no backend
-        document.getElementById('validationResult').textContent = data.message;
+        document.getElementById('validationResult').textContent = 'Validating transaction...';
+        await validateTransaction(transactionHash, wax.userAccount); // Envia o hash para validação no backend
 
     } catch (e) {
+        document.getElementById('response').style.color = 'red';
         document.getElementById('response').textContent = e.message;
     }
 }
@@ -78,25 +99,31 @@ async function logout() {
     
     if (wax.api) {
         wax.logout();
-        document.getElementById('response').textContent =' logged out from wax network';
+        document.getElementById('response').style.color = 'black';
+        document.getElementById('response').textContent ='* logged out from wax network *';
         document.getElementById('autologin').textContent = '';
         document.getElementById('loginresponse').textContent = '';
+        document.getElementById('button-login').style.backgroundColor = 'orange';
+        document.getElementById('button-logout').style.backgroundColor = 'lightblue';
+        document.getElementById('button-sign-transaction').style.backgroundColor = 'lightblue';
 
     } else {
+        document.getElementById('response').style.color = 'red';
         document.getElementById('response').append('* Login first *');
+
     }
     
 }
 
 // Função para enviar o hash da transação para validação no backend
-async function validateTransaction(transactionHash) {
+async function validateTransaction(transactionHash, userAccount) {
     try {
         const response = await fetch('http://localhost:8080/verifyTransaction', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ transactionHash: transactionHash })
+            body: JSON.stringify({ transactionHash: transactionHash, generatedHash: generatedHash, userAccount: userAccount })
         });
 
         if (!response.ok) {
@@ -106,10 +133,19 @@ async function validateTransaction(transactionHash) {
         }
 
         const data = await response.json();
-        document.getElementById('validationResult').textContent = data.message; // Exibe o resultado da validação no frontend
+        console.log('Success:', data.message);
+        document.getElementById('validationResult').textContent = data.message;
+        document.getElementById('validationResult').append('<br>' + data.account);
     } catch (error) {
         document.getElementById('validationResult').textContent = 'Error: ' + error.message;
         console.error('Error:', error);
     }
+}
+
+// Função para obter o hash gerado pelo backend
+async function getGeneratedHash() {
+    const response = await fetch('http://localhost:8080/hash');
+    const hash = await response.text();
+    return hash;
 }
 
