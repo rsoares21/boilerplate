@@ -7,7 +7,7 @@ const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
 // Inicie o servidor na porta 3000 (ou qualquer outra porta que preferir)
-const port = 3000;
+const port = 80;
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
 });
