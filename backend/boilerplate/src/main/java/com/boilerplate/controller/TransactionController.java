@@ -2,12 +2,15 @@ package com.boilerplate.controller;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,6 +26,9 @@ public class TransactionController {
     @Autowired
     private TransactionService transactionService;
     
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+    
 	@PostMapping("/verifyTransaction")
 	public ResponseEntity<?> verifyTransaction(@RequestBody TransactionRequest transactionRequest) {
         
@@ -31,10 +37,16 @@ public class TransactionController {
 		String transactionId = transactionRequest.getTransactionHash(); // Obtém o hash da transação do request
         String verifyMemoHash = transactionRequest.getGeneratedHash(); // This is the hash you generated and stored earlier
         
-        if (transactionService.isTransactionVerified(transactionId)) {
+        // Verifique se a transação já foi verificada anteriormente
+        if (transactionService.isTransactionAlreadyVerified(transactionId)) {
             return ResponseEntity.status(400).body("{\"error\": \"Transaction already verified\"}");
         }
 
+        // Verifique se o hash gerado pelo backend já expirou
+        if (transactionService.isGeneratedHashExpired(transactionRequest.getGeneratedHash(), transactionRequest.getUserAccount())) {
+            return ResponseEntity.status(400).body("{\"error\": \"Hash has expired, try again...\"}");
+        }
+        
         String endpoint = "https://wax.greymass.com/v1/history/get_transaction?id=" + transactionId; // URL do endpoint da API
         RestTemplate restTemplate = new RestTemplate();
 
@@ -102,11 +114,18 @@ public class TransactionController {
     }
 	
     @GetMapping("/hash")
-    public ResponseEntity<String> generateHash() {
+   	public ResponseEntity<String> generateHash(@RequestParam(value = "userAccount", required = true) String userAccount) {
+
         SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[16];
         random.nextBytes(bytes);
         String hash = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        
+        // Define a chave no Redis com o valor do hash e um tempo de expiração de 1 minuto
+        redisTemplate.opsForValue().set(hash, userAccount, 1, TimeUnit.MINUTES);
+        
+        System.out.println("redis-save: key=" + hash + " value=" + userAccount);
+        
         return ResponseEntity.ok(hash);
     }
 

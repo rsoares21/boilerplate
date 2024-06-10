@@ -60,7 +60,7 @@ async function sign() {
 
     try {
 
-        generatedHash = await getGeneratedHash();
+        generatedHash = await getGeneratedHash(wax.userAccount);
         console.log('generatedHash', generatedHash);
 
         const result = await wax.api.transact({
@@ -143,9 +143,8 @@ async function validateTransaction(transactionHash, userAccount) {
 }
 
 // Função para obter o hash gerado pelo backend
-async function getGeneratedHash() {
-    const response = await fetch('http://localhost:8080/hash');
+async function getGeneratedHash(userAccount) {
+    const response = await fetch(`http://localhost:8080/hash?userAccount=${encodeURIComponent(userAccount)}`);
     const hash = await response.text();
     return hash;
 }
-
