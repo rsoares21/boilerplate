@@ -25,116 +25,136 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 public class TransactionController {
-	
-    private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
 
-    @Autowired
-    private TransactionService transactionService;
-    
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-    
+	private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
+
+	@Autowired
+	private TransactionService transactionService;
+
+	@Autowired
+	private StringRedisTemplate redisTemplate;
+
 	@PostMapping("/verifyTransaction")
 	public ResponseEntity<?> verifyTransaction(@RequestBody TransactionRequest transactionRequest) {
-        
-		//TODO implementar logica de expiração da transacao
-		
+
+		// TODO implementar logica de expiração da transacao
+
 		String transactionId = transactionRequest.getTransactionHash(); // Obtém o hash da transação do request
-        String verifyMemoHash = transactionRequest.getGeneratedHash(); // This is the hash you generated and stored earlier
-        
-        // Verifica se a transação já foi verificada anteriormente
-        if (transactionService.isTransactionAlreadyVerified(transactionId)) {
-            return ResponseEntity.status(400).body("{\"error\": \"Transaction already verified\"}");
-        }
+		String verifyMemoHash = transactionRequest.getGeneratedHash(); // This is the hash you generated and stored
+																		// earlier
 
-        // Verifica se o hash gerado pelo backend já expirou
-        if (transactionService.isGeneratedHashExpired(transactionRequest.getGeneratedHash(), transactionRequest.getUserAccount())) {
-            return ResponseEntity.status(400).body("{\"error\": \"Hash has expired, try again...\"}");
-        }
-        
-        String endpoint = "https://wax.greymass.com/v1/history/get_transaction?id=" + transactionId; // URL do endpoint da API
-        RestTemplate restTemplate = new RestTemplate();
+		// Verifica se a transação já foi verificada anteriormente
+		if (transactionService.isTransactionAlreadyVerified(transactionId)) {
+			return ResponseEntity.status(400).body("{\"error\": \"Transaction already verified\"}");
+		}
 
-        int maxAttempts = 5;  // Número máximo de tentativas
-        int waitTime = 3000;   // Tempo de espera entre as tentativas em milissegundos
+		// Verifica se o hash gerado pelo backend já expirou
+		if (transactionService.isGeneratedHashExpired(transactionRequest.getGeneratedHash(),
+				transactionRequest.getUserAccount())) {
+			return ResponseEntity.status(400).body("{\"error\": \"Hash has expired, try again...\"}");
+		}
 
-        try {
-            for (int attempt = 1; attempt <= maxAttempts; attempt++) { // Loop para realizar múltiplas tentativas
-                try {
-                    
-                    logger.info("Tentativa: " + attempt);
+		String endpoint = "https://wax.greymass.com/v1/history/get_transaction?id=" + transactionId; // URL do endpoint
+																										// da API
+		RestTemplate restTemplate = new RestTemplate();
 
-                    String result = restTemplate.getForObject(endpoint, String.class); // Faz a requisição à API
+		int maxAttempts = 5; // Número máximo de tentativas
+		int waitTime = 3000; // Tempo de espera entre as tentativas em milissegundos
 
-                    // Parseia a resposta JSON para extrair os detalhes
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    JsonNode rootNode = objectMapper.readTree(result);
+		try {
+			for (int attempt = 1; attempt <= maxAttempts; attempt++) { // Loop para realizar múltiplas tentativas
+				try {
 
-                    String verifyAccount = rootNode.path("trx").path("trx").path("actions").get(0).path("authorization").get(0)
-                            .path("actor").asText(); // Extrai o ator da transação
-                    
-                    String txMemo = rootNode.path("trx").path("trx").path("actions").get(0).path("data").path("memo").asText();
+					logger.info("Tentativa: " + attempt);
 
-                    String txUserAccount = transactionRequest.getUserAccount(); // Obtém a conta do usuário do request
-                    
-                    logger.info("transactionId:"+transactionId);
-                    
-                    logger.info("verifyAccount  :"+verifyAccount);
-                    logger.info("txUserAccount  :"+txUserAccount);
-                    
-                    logger.info("verifyMemoHash :"+verifyMemoHash);
-                    logger.info("memo           :"+txMemo);
-                    
-                    
-                    if (!txMemo.equals(verifyMemoHash)) return ResponseEntity.status(400).body("{\"error\": \"Hash mismatch\"}");
+					String result = restTemplate.getForObject(endpoint, String.class); // Faz a requisição à API
 
-                    if (!txUserAccount.equals(verifyAccount)) return ResponseEntity.status(400).body("{\"error\": \"Account mismatch\"}");
-                    
-                    try {
-                    	transactionService.saveVerifiedTransaction(transactionId, verifyAccount);	
-                    } catch (Exception e) {
-                    	logger.info("database fail..." + e.getMessage());
+					// Parseia a resposta JSON para extrair os detalhes
+					ObjectMapper objectMapper = new ObjectMapper();
+					JsonNode rootNode = objectMapper.readTree(result);
+					
+					//logger.info("result:" + result);
+
+					String verifyAccount = rootNode.path("trx").path("trx").path("actions").get(0).path("authorization")
+							.get(0).path("actor").asText(); // Extrai o ator da transação
+
+					String txMemo = rootNode.path("trx").path("trx").path("actions").get(0).path("data").path("memo")
+							.asText();
+
+					String txUserAccount = transactionRequest.getUserAccount(); // Obtém a conta do usuário do request
+
+					logger.info("transactionId:" + transactionId);
+
+					logger.info("verifyAccount  :" + verifyAccount);
+					logger.info("txUserAccount  :" + txUserAccount);
+
+					logger.info("verifyMemoHash :" + verifyMemoHash);
+					logger.info("memo           :" + txMemo);
+
+					String transactionStatus = rootNode.path("trx").path("receipt").path("status").asText();
+
+					if (!transactionStatus.equals("executed"))
+						return ResponseEntity.status(400).body("{\"error\": \"Transaction status mismatch\"}");
+					
+					if (!txMemo.equals(verifyMemoHash))
+						return ResponseEntity.status(400).body("{\"error\": \"Hash mismatch\"}");
+
+					if (!txUserAccount.equals(verifyAccount))
+						return ResponseEntity.status(400).body("{\"error\": \"Account mismatch\"}");
+
+					try {
+						transactionService.saveVerifiedTransaction(transactionId, verifyAccount);
+					} catch (Exception e) {
+						logger.info("database fail..." + e.getMessage());
 					}
-                    
-                    TransactionResponse response = new TransactionResponse("Transaction Ok", verifyAccount);
-                    
-                    return ResponseEntity.ok(response);
 
-                } catch (Exception e) {
-                    // Se a tentativa falhar, espera antes de tentar novamente
-                    if (attempt == maxAttempts) {
-                        // Se for a última tentativa, lança a exceção
-                        throw e;
-                    }
-                    Thread.sleep(waitTime); // Espera pelo tempo definido antes de tentar novamente
-                }
-            }
-        } catch (Exception e) {
-        	logger.error("error:" + e.getMessage()); // Log de erro
-            
-            return ResponseEntity.status(500)
-                    .body("{\"error\": \"Error verifying transaction: " + e.getMessage() + "\"}"); // Retorna a resposta de erro
-        }
+					try {
+						transactionService.saveTransactionLog(transactionId, txUserAccount,
+								"LOGIN SUCCESSFUL With hash:" + txMemo);
+					} catch (Exception e) {
+						logger.info("database fail..." + e.getMessage());
+					}
 
-        // Em caso de falha, retorna uma resposta de erro
-        return ResponseEntity.status(500)
-                .body("{\"error\": \"Transaction not found after multiple attempts\"}");
-    }
-	
-    @GetMapping("/hash")
-   	public ResponseEntity<String> generateHash(@RequestParam(value = "userAccount", required = true) String userAccount) {
+					TransactionResponse response = new TransactionResponse("Transaction Ok", verifyAccount);
 
-        SecureRandom random = new SecureRandom();
-        byte[] bytes = new byte[16];
-        random.nextBytes(bytes);
-        String hash = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        
-        // Define a chave no Redis com o valor do hash e um tempo de expiração de 1 minuto
-        redisTemplate.opsForValue().set(hash, userAccount, 1, TimeUnit.MINUTES);
-        
-        //System.out.println("redis-save: key=" + hash + " value=" + userAccount);
-        
-        return ResponseEntity.ok(hash);
-    }
+					return ResponseEntity.ok(response);
+
+				} catch (Exception e) {
+					// Se a tentativa falhar, espera antes de tentar novamente
+					if (attempt == maxAttempts) {
+						// Se for a última tentativa, lança a exceção
+						throw e;
+					}
+					Thread.sleep(waitTime); // Espera pelo tempo definido antes de tentar novamente
+				}
+			}
+		} catch (Exception e) {
+			logger.error("error:" + e.getMessage()); // Log de erro
+
+			return ResponseEntity.status(500)
+					.body("{\"error\": \"Error verifying transaction: " + e.getMessage() + "\"}"); // Retorna a resposta
+																									// de erro
+		}
+
+		// Em caso de falha, retorna uma resposta de erro
+		return ResponseEntity.status(500).body("{\"error\": \"Transaction not found after multiple attempts\"}");
+	}
+
+	@GetMapping("/hash")
+	public ResponseEntity<String> generateHash(
+			@RequestParam(value = "userAccount", required = true) String userAccount) {
+
+		SecureRandom random = new SecureRandom();
+		byte[] bytes = new byte[16];
+		random.nextBytes(bytes);
+		String hash = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+
+		// Define a chave no Redis com o valor do hash e um tempo de expiração de 30s
+		redisTemplate.opsForValue().set(hash, userAccount, 30, TimeUnit.SECONDS);
+
+		// System.out.println("redis-save: key=" + hash + " value=" + userAccount);
+
+		return ResponseEntity.ok(hash);
+	}
 
 }

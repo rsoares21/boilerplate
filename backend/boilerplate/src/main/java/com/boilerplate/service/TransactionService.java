@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import com.boilerplate.model.TransactionLog;
 import com.boilerplate.model.VerifiedTransaction;
+import com.boilerplate.repository.TransactionLogRepository;
 import com.boilerplate.repository.VerifiedTransactionRepository;
 
 @Service
@@ -16,11 +18,19 @@ public class TransactionService {
     private VerifiedTransactionRepository verifiedTransactionRepository;
     
     @Autowired
+    private TransactionLogRepository transactionLogRepository;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     public void saveVerifiedTransaction(String transactionId, String userAccount) {
         VerifiedTransaction verifiedTransaction = new VerifiedTransaction(transactionId, userAccount, new Date(), "VERIFIED");
         verifiedTransactionRepository.save(verifiedTransaction);
+    }
+
+    public void saveTransactionLog(String transactionId, String userAccount, String description) {
+    	TransactionLog transactionLog = new TransactionLog(transactionId, userAccount, new Date(), description);
+    	transactionLogRepository.save(transactionLog);
     }
 
     public boolean isTransactionAlreadyVerified(String transactionId) {
