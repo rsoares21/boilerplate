@@ -20,8 +20,13 @@ import com.boilerplate.service.TransactionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 public class TransactionController {
+	
+    private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
 
     @Autowired
     private TransactionService transactionService;
@@ -37,12 +42,12 @@ public class TransactionController {
 		String transactionId = transactionRequest.getTransactionHash(); // Obtém o hash da transação do request
         String verifyMemoHash = transactionRequest.getGeneratedHash(); // This is the hash you generated and stored earlier
         
-        // Verifique se a transação já foi verificada anteriormente
+        // Verifica se a transação já foi verificada anteriormente
         if (transactionService.isTransactionAlreadyVerified(transactionId)) {
             return ResponseEntity.status(400).body("{\"error\": \"Transaction already verified\"}");
         }
 
-        // Verifique se o hash gerado pelo backend já expirou
+        // Verifica se o hash gerado pelo backend já expirou
         if (transactionService.isGeneratedHashExpired(transactionRequest.getGeneratedHash(), transactionRequest.getUserAccount())) {
             return ResponseEntity.status(400).body("{\"error\": \"Hash has expired, try again...\"}");
         }
@@ -56,7 +61,9 @@ public class TransactionController {
         try {
             for (int attempt = 1; attempt <= maxAttempts; attempt++) { // Loop para realizar múltiplas tentativas
                 try {
-                    System.out.println("Tentativa: " + attempt); // Log de tentativa
+                    
+                    logger.info("Tentativa: " + attempt);
+
                     String result = restTemplate.getForObject(endpoint, String.class); // Faz a requisição à API
 
                     // Parseia a resposta JSON para extrair os detalhes
@@ -70,13 +77,13 @@ public class TransactionController {
 
                     String txUserAccount = transactionRequest.getUserAccount(); // Obtém a conta do usuário do request
                     
-                    System.out.println("transactionId:"+transactionId);
+                    logger.info("transactionId:"+transactionId);
                     
-                    System.out.println("verifyAccount  :"+verifyAccount);
-                    System.out.println("txUserAccount  :"+txUserAccount);
+                    logger.info("verifyAccount  :"+verifyAccount);
+                    logger.info("txUserAccount  :"+txUserAccount);
                     
-                    System.out.println("verifyMemoHash :"+verifyMemoHash);
-                    System.out.println("memo           :"+txMemo);
+                    logger.info("verifyMemoHash :"+verifyMemoHash);
+                    logger.info("memo           :"+txMemo);
                     
                     
                     if (!txMemo.equals(verifyMemoHash)) return ResponseEntity.status(400).body("{\"error\": \"Hash mismatch\"}");
@@ -86,7 +93,7 @@ public class TransactionController {
                     try {
                     	transactionService.saveVerifiedTransaction(transactionId, verifyAccount);	
                     } catch (Exception e) {
-                    	System.out.println("database fail..." + e.getMessage());
+                    	logger.info("database fail..." + e.getMessage());
 					}
                     
                     TransactionResponse response = new TransactionResponse("Transaction Ok", verifyAccount);
@@ -103,7 +110,8 @@ public class TransactionController {
                 }
             }
         } catch (Exception e) {
-            System.out.println("error:" + e.getMessage()); // Log de erro
+        	logger.error("error:" + e.getMessage()); // Log de erro
+            
             return ResponseEntity.status(500)
                     .body("{\"error\": \"Error verifying transaction: " + e.getMessage() + "\"}"); // Retorna a resposta de erro
         }
@@ -124,7 +132,7 @@ public class TransactionController {
         // Define a chave no Redis com o valor do hash e um tempo de expiração de 1 minuto
         redisTemplate.opsForValue().set(hash, userAccount, 1, TimeUnit.MINUTES);
         
-        System.out.println("redis-save: key=" + hash + " value=" + userAccount);
+        //System.out.println("redis-save: key=" + hash + " value=" + userAccount);
         
         return ResponseEntity.ok(hash);
     }
