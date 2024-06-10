@@ -120,20 +120,18 @@ public class TransactionController {
 					return ResponseEntity.ok(response);
 
 				} catch (Exception e) {
-					// Se a tentativa falhar, espera antes de tentar novamente
 					if (attempt == maxAttempts) {
-						// Se for a última tentativa, lança a exceção
 						throw e;
 					}
-					Thread.sleep(waitTime); // Espera pelo tempo definido antes de tentar novamente
+					
+					Thread.sleep(waitTime);
 				}
 			}
 		} catch (Exception e) {
-			logger.error("error:" + e.getMessage()); // Log de erro
+			logger.error("error:" + e.getMessage());
 
 			return ResponseEntity.status(500)
-					.body("{\"error\": \"Error verifying transaction: " + e.getMessage() + "\"}"); // Retorna a resposta
-																									// de erro
+					.body("{\"error\": \"Error verifying transaction: " + e.getMessage() + "\"}"); 
 		}
 
 		// Em caso de falha, retorna uma resposta de erro
