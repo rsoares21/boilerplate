@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mongodb-service:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: boilerplate
+
+    volumes:
+      - mongo-data:/data/db
+
+  redis-service:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mongo-data:
+    driver: local
+  redis-data:
+    driver: local

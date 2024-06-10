@@ -3,6 +3,7 @@ package com.boilerplate.controller;
 import java.security.SecureRandom;
 import java.util.Base64;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,21 +13,32 @@ import org.springframework.web.client.RestTemplate;
 
 import com.boilerplate.dto.TransactionRequest;
 import com.boilerplate.dto.TransactionResponse;
+import com.boilerplate.service.TransactionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 public class TransactionController {
 
+    @Autowired
+    private TransactionService transactionService;
+    
 	@PostMapping("/verifyTransaction")
 	public ResponseEntity<?> verifyTransaction(@RequestBody TransactionRequest transactionRequest) {
-        String transactionId = transactionRequest.getTransactionHash(); // Obtém o hash da transação do request
+        
+		//TODO implementar logica de expiração da transacao
+		
+		String transactionId = transactionRequest.getTransactionHash(); // Obtém o hash da transação do request
         String verifyMemoHash = transactionRequest.getGeneratedHash(); // This is the hash you generated and stored earlier
+        
+        if (transactionService.isTransactionVerified(transactionId)) {
+            return ResponseEntity.status(400).body("{\"error\": \"Transaction already verified\"}");
+        }
 
         String endpoint = "https://wax.greymass.com/v1/history/get_transaction?id=" + transactionId; // URL do endpoint da API
         RestTemplate restTemplate = new RestTemplate();
 
-        int maxAttempts = 10;  // Número máximo de tentativas
+        int maxAttempts = 5;  // Número máximo de tentativas
         int waitTime = 3000;   // Tempo de espera entre as tentativas em milissegundos
 
         try {
@@ -46,19 +58,27 @@ public class TransactionController {
 
                     String txUserAccount = transactionRequest.getUserAccount(); // Obtém a conta do usuário do request
                     
-                    System.out.println("verifyAccount:"+verifyAccount);
-                    System.out.println("txUserAccount:"+txUserAccount);
+                    System.out.println("transactionId:"+transactionId);
                     
-                    System.out.println("verifyMemoHash:"+verifyMemoHash);
-                    System.out.println("memo:"+txMemo);
+                    System.out.println("verifyAccount  :"+verifyAccount);
+                    System.out.println("txUserAccount  :"+txUserAccount);
+                    
+                    System.out.println("verifyMemoHash :"+verifyMemoHash);
+                    System.out.println("memo           :"+txMemo);
                     
                     
                     if (!txMemo.equals(verifyMemoHash)) return ResponseEntity.status(400).body("{\"error\": \"Hash mismatch\"}");
 
                     if (!txUserAccount.equals(verifyAccount)) return ResponseEntity.status(400).body("{\"error\": \"Account mismatch\"}");
                     
-                    //return ResponseEntity.ok("{ \"message\": \"Transaction Ok: " + account + "\" }"); // Retorna a resposta com a conta
+                    try {
+                    	transactionService.saveVerifiedTransaction(transactionId, verifyAccount);	
+                    } catch (Exception e) {
+                    	System.out.println("database fail..." + e.getMessage());
+					}
+                    
                     TransactionResponse response = new TransactionResponse("Transaction Ok", verifyAccount);
+                    
                     return ResponseEntity.ok(response);
 
                 } catch (Exception e) {
