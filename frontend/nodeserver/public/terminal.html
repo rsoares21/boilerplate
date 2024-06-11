@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="shop.css">
+
+    <script src="https://unpkg.com/anchor-link@3"></script>
+    <script src="https://unpkg.com/anchor-link-browser-transport@3"></script>
+    <script src='waxjs.js'></script>
+    <script src='terminal.js'></script>
+    <meta charset="utf-8"></meta>
+    <title>JavaScript Terminal</title>
+    <link rel="stylesheet" href="./terminal.css">
+</head>
+
+<body onload="showPrompt(true)">
+    <div id="top-div-hardware">
+    </div>
+
+    <div id="terminal-container" onclick="terminalInput.focus();">
+        <br>
+        <div id="top-div-chat">
+        </div>
+        <div id="top-div-stake">
+        </div>
+        <div id="top-div-scan">
+            <iframe id="top-div-scan-iframe" style="height: 0px; border: none; overflow: hidden;" src="x.html"></iframe>
+        </div>
+        <div id="buttons-div">
+        </div>
+        <div id="top-div-shop">
+            <div id="shop_container" class="card-container">
+
+            </div>
+        </div>
+
+        <div class="terminal-line">
+
+            <span class="prompt">&gt;</span>
+            <input type="text" id="terminal-input">
+        </div>
+        <div id="terminal-content"></div>
+    </div>
+
+    <div id="bottom-div">
+        <span style="color:lime;font-size: 28px;">TYPE&nbsp;&nbsp;</span>
+        <span class="fade-in-out">help</span>
+        <span style="color:limegreen;font-size: 28px;">&nbsp;&nbsp;FOR COMMANDS</span>
+    </div>
+
+    <script>
+
+        const terminalContainer = document.getElementById('terminal-container');
+        const terminalContent = document.getElementById('terminal-content');
+        const terminalInput = document.getElementById('terminal-input');
+
+        // Add an event listener to the input field for the Enter key and Tab key
+        terminalInput.addEventListener('keyup', handleEnterKey);
+        terminalInput.addEventListener('keydown', handleAutocomplete);
+        terminalInput.addEventListener('keydown', function (event) {
+            if (event.keyCode === 38) { // Up arrow key
+                event.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    terminalInput.value = commandHistory[historyIndex];
+                }
+            } else if (event.keyCode === 40) { // Down arrow key
+                event.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    terminalInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    terminalInput.value = '';
+                }
+            }
+        });
+
+        // Display the prompt and set the cursor position to the end of the input field when the user clicks on the terminal container
+        terminalInput.addEventListener('click', function (event) {
+            setCursorPositionToEnd();
+        });
+
+        const wax = new waxjs.WaxJS({
+            rpcEndpoint: 'https://wax.greymass.com'
+            //rpcEndpoint: 'https://wax.testnet.eosdublin.io'
+            //rpcEndpoint: 'testnet.waxsweden.org'
+            //rpcEndpoint: 'testnet.waxsweden.org'
+            
+        });
+
+        //automatically check for credentials
+        autoLogin();
+
+        //checks if autologin is available 
+        async function autoLogin() {
+            let isAutoLoginAvailable = await wax.isAutoLoginAvailable();
+            if (isAutoLoginAvailable) {
+                let userAccount = wax.userAccount;
+                let pubKeys = wax.pubKeys;
+                //let str = 'AutoLogin enabled for account: ' + userAccount + '<br/>Active: ' + pubKeys[0] + '<br/>Owner: ' + pubKeys[1]
+
+                const accountLine = document.createElement('div');
+                accountLine.classList.add('terminal-line');
+                accountLine.classList.add('recognized');
+                //accountLine.innerHTML = 'AutoLogin enabled for account: ' + userAccount + '<br/>Active: ' + pubKeys[0] + '<br/>Owner: ' + pubKeys[1];
+                accountLine.innerHTML = 'Welcome back ' + userAccount;
+                terminalContent.prepend(accountLine);
+
+            } else {
+
+                const accountLine = document.createElement('div');
+                accountLine.classList.add('terminal-line');
+                accountLine.classList.add('recognized');
+                accountLine.innerHTML = 'Please login using "login" or "login-anchor"';
+                terminalContent.prepend(accountLine);
+
+            }
+        }
+
+        async function waxLogin() {
+            try {
+                //const wax = new waxjs.WaxJS('https://wax.greymass.com');
+                const userAccount = await wax.login();
+                let pubKeys = wax.pubKeys;
+                updateTerminalContent('Welcome in : ' + userAccount, 'systemoutput');
+                player = userAccount;
+                const bottomDiv = document.getElementById("bottom-div");
+                bottomDiv.innerHTML = `<p> ${userAccount} </p> `;
+            } catch (error) {
+                console.error(error);
+                updateTerminalContent('Error logging in: ' + error.message, 'unrecognized');
+            }
+        }
+
+        function waxLogout() {
+            if (wax.userAccount) {
+                wax.logout();
+                updateTerminalContent('Logged out', 'recognized');
+            } else {
+                updateTerminalContent('No user is currently logged in', 'unrecognized');
+            }
+        }
+
+        link.restoreSession('codecombat').then((recentsession) => {
+            session = recentsession;
+            console.log(`Session for ${session.auth} restored`)
+            updateTerminalContent('Welcome ' + session.auth, 'systemoutput');
+            updateBothDivsWithUserInfo();
+            terminalInput.focus(); // Ensure focus remains on the input field
+            //if (session.auth.actor) startApiForSuspiciousActivity();
+
+        })
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "visible") {
+                // Page is now visible
+                console.log("Page is visible");
+                //showPrompt(true)
+                terminalInput.focus();
+
+                // Do something when the page becomes visible
+            } else {
+                // Page is now hidden
+                console.log("Page is hidden");
+                // Do something when the page becomes hidden
+            }
+        });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,238 @@
+@font-face {
+    font-family: Cyber;
+    src: url("https://assets.codepen.io/605876/Blender-Pro-Bold.otf");
+    font-display: swap;
+}
+
+@import 'https://fonts.googleapis.com/css?family=Lato:400,900';
+
+body {
+    background-color: black;
+    color: lime;
+    font-family: 'Cyber', sans-serif;
+    font-size: 22px;
+    padding: 6px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+#terminal-container {
+    height: 99%;
+    width: 100%;
+    margin: 0 auto;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    border: none;
+}
+
+.terminal-line {
+    display: flex;
+    align-items: center;
+}
+
+#terminal-input {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: rgb(180, 180, 180);
+    font-size: 22px;
+    width: 100%;
+}
+
+.recognized {
+    color: rgb(180, 180, 180);
+}
+
+.unrecognized {
+    color: #505050;
+}
+
+.systemoutput {
+    color: limegreen;
+}
+
+.mainapioutput {
+    color: #d112f7;
+}
+
+.miningoutput {
+    color: #12dcf7;
+}
+
+.commandfail {
+    color: crimson;
+}
+
+@keyframes blink {
+
+    0%,
+    49% {
+        opacity: 1;
+    }
+
+    50%,
+    100% {
+        opacity: 0;
+    }
+}
+
+.prompt {
+    margin-right: 5px;
+    color: rgb(0, 255, 213);
+    animation: blink 1s linear infinite;
+    /* Add this line */
+}
+
+#top-div-chat {
+    height: 0px;
+    top: 0;
+    left: 0;
+    margin: 5px;
+    background-color: black;
+    background-image: url("https://media.giphy.com/media/I0e4u216Qhww8eRTVq/giphy.gif");
+    background-size: cover;
+    background-position: center;
+}
+
+#top-div-scan {
+    height: 0px;
+    top: 0;
+    left: 0;
+    margin: 5px;
+    background-color: black;
+    background-size: cover;
+    background-position: center;
+}
+
+#top-div-stake {
+    height: 0px;
+    top: 0;
+    left: 0;
+    margin: 5px;
+    background-color: black;
+    background-image: url("https://media.giphy.com/media/UNHplVba2fweBfkLHv/giphy-downsized-large.gif");
+    background-size: cover;
+    background-position: center;
+
+
+}
+
+#bottom-div {
+    font-weight: 700;
+    font-size: 56px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background-color: #505050;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#top-div-hardware {
+    font-weight: 700;
+    font-size: 22px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0px;
+    background-color: #505050;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.fade-in-out {
+    animation: fade-in-out 2s ease-in-out infinite;
+}
+
+@keyframes fade-in-out {
+    0% {
+        opacity: 0;
+    }
+
+    25% {
+        opacity: 1;
+    }
+
+    75% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+
+@keyframes flash {
+    0% {
+        color: grey;
+    }
+
+    50% {
+        color: white;
+    }
+
+    100% {
+        color: dodgerblue;
+    }
+}
+
+.flash {
+    animation: flash 200ms infinite;
+}
+
+#buttons-div {
+    height: 0px;
+    top: 0;
+    left: 0;
+    margin-top: 5px;
+    background-color: black;
+    background-image: url("https://media.giphy.com/media/I0e4u216Qhww8eRTVq/giphy.gif");
+    background-size: cover;
+    background-position: center;
+}
+
+#top-div-shop {
+    height: 0px;
+    top: 0;
+    left: 0;
+    margin: 5px;
+    background-color: black;
+    background-image: url("https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMWZrcjhxcnpxODhhZjlucXk1NTJ1bDg0NjczczVzNWY2czB5cTFtcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/zeIzPCEBs6lq4eHjxw/giphy-downsized-large.gif");
+    background-size: cover;
+    background-position: center;
+    overflow-y: scroll;
+}
+
+#top-div-shop::-webkit-scrollbar {
+    width: 0px;
+    /* Hide the default scrollbar for WebKit browsers */
+}
+
+#top-div-shop {
+    scrollbar-width: none;
+    /* Hide the default scrollbar for Firefox */
+}
+
+#top-div-shop::-webkit-scrollbar-track {
+    background-color: transparent;
+    /* Set the scrollbar track color to transparent for WebKit browsers */
+}
+
+#top-div-shop::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    /* Set the scrollbar thumb color to transparent for WebKit browsers */
+}
+
+#top-div-shop::-webkit-scrollbar-track,
+#top-div-shop::-webkit-scrollbar-thumb {
+    border: none;
+    /* Remove borders from the scrollbar thumb and track for WebKit browsers */
+}
